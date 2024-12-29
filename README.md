@@ -41,7 +41,7 @@
 
 1. Make sure you have [java 19 or above installed](https://adoptium.net/temurin/releases/?package=jre). (`java --version` on command line)
 2. Extract the [latest void.zip released bundle](https://github.com/GregHib/void/releases) into a directory.
-3. Extract the [latest pre-modified game files cache.zip](https://mega.nz/folder/ZMN2AQaZ#4rJgfzbVW0_mWsr1oPLh1A) into `/void/data/cache/`.
+3. Extract the [latest pre-modified game files cache.zip]() into `/void/data/cache/`.
 4. Run either the `run-server.bat` on Windows, or `run-server.sh` on Linux.
     
    You should see `[Main] - Void loaded in 2349ms` to show the server is up and running correctly.
@@ -66,7 +66,7 @@ Selecting `git` version control and entering the void project URL `git@github.co
 
 Press clone and after a little while the project will be opened for you, the JDK indexed and gradle setup.
 
-Extract the [cache files](https://mega.nz/folder/ZMN2AQaZ#4rJgfzbVW0_mWsr1oPLh1A) into a new directory called `/cache/` inside of the `/data/` directory.
+Extract the [cache files]() into a new directory called `/cache/` inside of the `/data/` directory.
 
 From here you can navigate in the left panel to `/game/src/main/kotlin/world/gregs/voidps/` where you will find [Main.kt](./game/src/main/kotlin/world/gregs/voidps/Main.kt) which you should be able to right-click and run.
 

@@ -177,6 +177,37 @@ adminCommand("item") {
     }
 }
 
+adminCommand("kit") {
+
+}
+
+adminCommand("kits") {
+    val parts = content.split(" ")
+    val definition = definitions.get(alternativeNames.getOrDefault(parts[0], parts[0]))
+    val id = definition.stringId
+    val amount = parts.getOrNull(1) ?: "1"
+    val charges = definition.getOrNull<Int>("charges")
+    player.inventory.transaction {
+        if (charges != null) {
+            for (i in 0 until amount.toSILong()) {
+                val index = inventory.freeIndex()
+                if (index == -1) {
+                    break
+                }
+                set(index, Item(id, 1))
+                if (charges > 0) {
+                    charge(player, index, charges)
+                }
+            }
+        } else {
+            addToLimit(id, if (amount == "max") Int.MAX_VALUE else amount.toSILong().toInt())
+        }
+    }
+    if (player.inventory.transaction.error != TransactionError.None) {
+        player.message(player.inventory.transaction.error.toString())
+    }
+}
+
 adminCommand("give") {
     val parts = content.split(" ")
     val id = definitions.get(parts.first()).stringId
