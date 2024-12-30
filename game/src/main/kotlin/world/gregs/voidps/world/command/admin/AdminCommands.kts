@@ -2,6 +2,7 @@
 
 package world.gregs.voidps.world.command.admin
 
+import KitDefinitions
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -40,6 +41,7 @@ import world.gregs.voidps.engine.entity.item.drop.ItemDrop
 import world.gregs.voidps.engine.entity.obj.GameObjects
 import world.gregs.voidps.engine.entity.worldSpawn
 import world.gregs.voidps.engine.get
+import world.gregs.voidps.engine.getProperty
 import world.gregs.voidps.engine.inject
 import world.gregs.voidps.engine.inv.*
 import world.gregs.voidps.engine.inv.transact.TransactionError
@@ -264,7 +266,43 @@ adminCommand("kittest") {
 //    player.message("Spawned kit '$kitName' successfully!")
 //}
 
+// Admin Command to spawn kits
+// Example usage
+
 adminCommand("kit") {
+    val itemDefinitions: ItemDefinitions = get()
+    val kitDefinitions = KitDefinitions(itemDefinitions)
+
+    val args = content.split(" ")
+    // Load kits from file
+    kitDefinitions.loadKits(getProperty("kitsDefinitionsPath"))
+
+    // Example kit name
+    val kitName = args[0].lowercase(Locale.getDefault())
+    val items = kitDefinitions.getKitItems(kitName)
+
+    if (items == null) {
+        player.message("Kit '$kitName' not found.")
+        return@adminCommand
+    }
+
+    items.forEach { itemName ->
+        val itemId = itemDefinitions.getItemIdByName(itemName)
+        if (itemId == -1) {
+            player.message("Item '$itemName' not found.")
+            return@forEach
+        }
+
+        val success = player.inventory.add(itemId.toString(), 1) // Convert itemId to String
+        if (success) {
+            player.message("Added $itemName to your inventory.")
+        } else {
+            player.message("Failed to add $itemName. Inventory might be full.")
+        }
+    }
+}
+
+adminCommand("kit2") {
     // Define a global map of item names to IDs
     val itemIds = mapOf(
         "Rune Full Helm" to 1163,
@@ -386,34 +424,6 @@ adminCommand("kit") {
     player.message("Successfully spawned kit: $keyword")
 }
 
-
-
-adminCommand("kits") {
-    val parts = content.split(" ")
-    val definition = definitions.get(alternativeNames.getOrDefault(parts[0], parts[0]))
-    val id = definition.stringId
-    val amount = parts.getOrNull(1) ?: "1"
-    val charges = definition.getOrNull<Int>("charges")
-    player.inventory.transaction {
-        if (charges != null) {
-            for (i in 0 until amount.toSILong()) {
-                val index = inventory.freeIndex()
-                if (index == -1) {
-                    break
-                }
-                set(index, Item(id, 1))
-                if (charges > 0) {
-                    charge(player, index, charges)
-                }
-            }
-        } else {
-            addToLimit(id, if (amount == "max") Int.MAX_VALUE else amount.toSILong().toInt())
-        }
-    }
-    if (player.inventory.transaction.error != TransactionError.None) {
-        player.message(player.inventory.transaction.error.toString())
-    }
-}
 
 adminCommand("give") {
     val parts = content.split(" ")
