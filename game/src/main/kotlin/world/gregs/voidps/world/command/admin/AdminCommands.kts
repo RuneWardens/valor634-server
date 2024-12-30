@@ -68,6 +68,10 @@ import world.gregs.voidps.world.interact.entity.sound.playMidi
 import world.gregs.voidps.world.interact.entity.sound.playSound
 import world.gregs.voidps.world.interact.world.spawn.loadNpcSpawns
 import world.gregs.voidps.world.interact.world.spawn.loadObjectSpawns
+import world.gregs.yaml.Yaml
+import java.io.File
+import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.set
 import kotlin.system.measureTimeMillis
@@ -177,9 +181,212 @@ adminCommand("item") {
     }
 }
 
-adminCommand("kit") {
+adminCommand("kittest") {
+    val itemDefinitions: ItemDefinitions = get()
 
+    val itemName = "amulet_of_fury"
+    val itemId = itemDefinitions.getItemIdByName(itemName)
+
+    if (itemId == -1) {
+        player.message("Item '$itemName' not found.")
+        return@adminCommand
+    }
+
+    val success = player.inventory.add(itemId.toString(), 1) // Convert itemId to String
+    if (success) {
+        player.message("Successfully spawned $itemName into your inventory!")
+    } else {
+        player.message("Failed to spawn $itemName. Inventory might be full.")
+    }
 }
+
+//// Determine the root directory dynamically
+//val kitsFilePath = getPath("kitsDefinitionsPath") // Fetch from properties
+//
+//val kits: Map<String, List<String>> = try {
+//    val kitsFile = File(kitsFilePath)
+//    if (!kitsFile.exists() || !kitsFile.isFile) {
+//        throw RuntimeException("kits.yml file not found at path: ${kitsFile.absolutePath}")
+//    }
+//
+//    val fileContent = kitsFile.readText()
+//    println("File content of kits.yml: $fileContent")
+//
+//    val yaml = Yaml()
+//    val rawData = yaml.load<Any>(fileContent)
+//
+//    if (rawData !is Map<*, *>) {
+//        throw IllegalStateException("Invalid YAML structure. Expected a map at the root level.")
+//    }
+//
+//    val kitsSection = rawData["kits"] as? Map<String, List<String>>
+//        ?: throw IllegalStateException("Missing or malformed 'kits' section in kits.yml.")
+//
+//    kitsSection.mapValues { it.value.map { item -> item.toString() } }
+//} catch (e: Exception) {
+//    println("Error loading kits.yml: ${e.message}")
+//    e.printStackTrace()
+//    throw RuntimeException("Failed to load kits.yml from path: $kitsFilePath", e)
+//}
+
+
+
+// Admin Command to spawn kits
+//adminCommand("spawnKit") {
+//    val args = content.split(" ") // Adjust to split the input content for arguments
+//    val itemDefinitions: ItemDefinitions = get() // Retrieve your ItemDefinitions instance
+//
+//    if (args.isEmpty()) {
+//        player.message("Please specify a kit name.")
+//        return@adminCommand
+//    }
+//
+//    val kitName = args[0].lowercase(Locale.getDefault()) // Use lowercase(Locale.getDefault())
+//    val kitItems = kits[kitName]
+//
+//    if (kitItems == null || kitItems.isEmpty()) {
+//        player.message("Kit '$kitName' not found or is empty.")
+//        return@adminCommand
+//    }
+//
+//    kitItems.forEach { itemName ->
+//        val itemId = itemDefinitions.getItemIdByName(itemName)
+//        if (itemId == -1) {
+//            player.message("Item '$itemName' not found.")
+//        } else {
+//            val success = player.inventory.add(itemId.toString(), 1)
+//            if (!success) {
+//                player.message("Failed to add '$itemName' to inventory. Inventory might be full.")
+//            }
+//        }
+//    }
+//
+//    player.message("Spawned kit '$kitName' successfully!")
+//}
+
+adminCommand("kit") {
+    // Define a global map of item names to IDs
+    val itemIds = mapOf(
+        "Rune Full Helm" to 1163,
+        "Rune Platebody" to 1127,
+        "Rune Platelegs" to 1079,
+        "Rune Kiteshield" to 1201,
+        "Abyssal Whip" to 4151,
+        "Ahrim's Hood" to 4708,
+        "Ahrim's Robetop" to 4712,
+        "Ahrim's Robeskirt" to 4714,
+        "Verac's Helm" to 4753,
+        "Verac's Brassard" to 4757,
+        "Verac's Plateskirt" to 4759,
+        "Rune Defender" to 1201,
+        "Dragon Square Shield" to 1187,
+        "Archer Helm" to 3749,
+        "Black D'hide Body" to 2503,
+        "Black D'hide Chaps" to 2497,
+        "Rune Arrows" to 892,
+        "Black D'hide Vambraces" to 2491,
+        "Dragon Scimitar" to 4587,
+        "Rune Scimitar" to 1333,
+        "Climbing Boots" to 3105,
+        "Santa Hat" to 1050,
+        "Red Party Hat" to 1038,
+        "Yellow Party Hat" to 1040,
+        "Blue Party Hat" to 1042,
+        "Green Party Hat" to 1044,
+        "Purple Party Hat" to 1046,
+        "White Party Hat" to 1048,
+        "Helm of Neitiznot" to 10828,
+        "Amulet of Fury" to 6585,
+        "Fire Cape" to 6570,
+        "Fighter Torso" to 10551,
+        "Bandos Chestplate" to 11832,
+        "Bandos Tassets" to 11834,
+        "Dragon Defender" to 20072,
+        "Dragon Boots" to 11732,
+        "Berserker Ring" to 6737,
+        "Karil's Crossbow" to 4736,
+        "Karil's Coif" to 4738,
+        "Rune Crossbow" to 9185,
+        "Ghostly Robetop" to 6107,
+        "Ghostly Robeskirt" to 6108,
+        "Ghostly Hood" to 6109,
+        "Amulet of Strength" to 1725,
+        "Ava's Accumulator" to 10499,
+        "Noted Saradomin Brew" to 6685,
+        "Noted Super Restore" to 3026,
+        "Noted Prayer Potion" to 2435,
+        "Noted Shark" to 385,
+        "Noted Karambwan" to 3144,
+        "Noted Combat Potion" to 9739,
+        "Noted Stamina Potion" to 12625,
+        "Noted Antidote++" to 5952,
+        "Monkfish" to 7946,
+        "Tuna Potato" to 7060,
+        "Anglerfish" to 13441,
+        "Law Rune" to 563,
+        "Chaos Rune" to 562,
+        "Death Rune" to 560,
+        "Astral Rune" to 9075,
+        "Earth Rune" to 557,
+        "Blood Rune" to 565,
+        "Water Rune" to 555
+    )
+
+    // Define kits using the item names
+    val kits = mapOf(
+        "rune" to listOf("Rune Full Helm", "Rune Platebody", "Rune Platelegs", "Rune Kiteshield"),
+        "abyssal_whip" to listOf("Abyssal Whip"),
+        "ahrims" to listOf("Ahrim's Hood", "Ahrim's Robetop", "Ahrim's Robeskirt"),
+        "zerker" to listOf("Rune Defender", "Rune Platebody", "Rune Platelegs", "Dragon Square Shield"),
+        "ranger" to listOf("Archer Helm", "Black D'hide Body", "Black D'hide Chaps", "Rune Arrows", "Black D'hide Vambraces"),
+        "pure" to listOf("Dragon Scimitar", "Rune Scimitar", "Climbing Boots"),
+        "santa_hat" to listOf("Santa Hat"),
+        "party_hats" to listOf("Red Party Hat", "Yellow Party Hat", "Blue Party Hat", "Green Party Hat", "Purple Party Hat", "White Party Hat"),
+        "main" to listOf("Helm of Neitiznot", "Amulet of Fury", "Fire Cape", "Fighter Torso", "Bandos Chestplate", "Bandos Tassets", "Abyssal Whip", "Dragon Defender", "Dragon Boots", "Berserker Ring"),
+        "hybrid_pvp" to listOf("Ahrim's Hood", "Ahrim's Robetop", "Ahrim's Robeskirt", "Karil's Crossbow", "Karil's Coif", "Verac's Helm", "Verac's Brassard", "Verac's Plateskirt", "Abyssal Whip", "Rune Crossbow"),
+        "range_tank" to listOf("Archer Helm", "Black D'hide Body", "Black D'hide Chaps", "Black D'hide Vambraces", "Rune Arrows", "Rune Platebody", "Rune Kiteshield"),
+        "pure_pvp" to listOf("Ghostly Robetop", "Ghostly Robeskirt", "Ghostly Hood", "Dragon Scimitar", "Climbing Boots", "Amulet of Strength", "Ava's Accumulator", "Rune Arrows"),
+        "potions" to listOf("Noted Saradomin Brew", "Noted Super Restore", "Noted Prayer Potion", "Noted Combat Potion", "Noted Stamina Potion", "Noted Antidote++"),
+        "food" to listOf("Noted Shark", "Noted Karambwan", "Monkfish", "Tuna Potato", "Anglerfish"),
+        "vengeance" to listOf("Astral Rune", "Earth Rune", "Death Rune"),
+        "barrage" to listOf("Blood Rune", "Death Rune", "Water Rune"),
+        "teleblock" to listOf("Law Rune", "Chaos Rune", "Death Rune"),
+        "bronze" to listOf("Bronze Full Helm", "Bronze Platebody", "Bronze Platelegs", "Bronze Kiteshield"),
+        "iron" to listOf("Iron Full Helm", "Iron Platebody", "Iron Platelegs", "Iron Kiteshield"),
+        "steel" to listOf("Steel Full Helm", "Steel Platebody", "Steel Platelegs", "Steel Kiteshield"),
+        "mithril" to listOf("Mithril Full Helm", "Mithril Platebody", "Mithril Platelegs", "Mithril Kiteshield"),
+        "adamant" to listOf("Adamant Full Helm", "Adamant Platebody", "Adamant Platelegs", "Adamant Kiteshield"),
+        "dragon" to listOf("Dragon Full Helm", "Dragon Platebody", "Dragon Platelegs", "Dragon Kiteshield")
+    )
+
+    // Extract the kit keyword from the command input
+    val keyword = this.content.trim().lowercase()
+
+    // Check if the keyword matches a predefined kit
+    val kitItems = kits[keyword]
+    if (kitItems == null) {
+        player.message("Kit not found. Available kits: ${kits.keys.joinToString(", ")}")
+        return@adminCommand
+    }
+
+    // Attempt to add each item in the kit to the player's inventory
+    kitItems.forEach { itemName ->
+        val itemId = itemIds[itemName]
+        if (itemId != null) {
+            val success = player.inventory.add(itemId.toString(), 1) // Convert itemId to String
+            if (!success) {
+                player.message("Failed to add item: $itemName ($itemId) (inventory full or other issue)")
+            }
+        } else {
+            player.message("Item not found in global map: $itemName")
+        }
+    }
+
+    // Confirm the kit has been added
+    player.message("Successfully spawned kit: $keyword")
+}
+
+
 
 adminCommand("kits") {
     val parts = content.split(" ")

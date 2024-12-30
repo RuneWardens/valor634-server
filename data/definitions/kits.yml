@@ -1,0 +1,66 @@
+kits:
+  barrows:
+    - ahrim_hood
+    - ahrim_robetop
+    - ahrim_robeskirt
+    - ahrim_staff
+    - dharok_helm
+    - dharok_platebody
+    - dharok_platelegs
+    - dharok_greataxe
+    - guthan_helm
+    - guthan_platebody
+    - guthan_chainskirt
+    - guthan_warspear
+    - karil_coif
+    - karil_leathertop
+    - karil_leatherskirt
+    - karil_crossbow
+    - torag_helm
+    - torag_platebody
+    - torag_platelegs
+    - torag_hammers
+    - verac_helm
+    - verac_brassard
+    - verac_plateskirt
+    - verac_flail
+  fishing:
+    - small_fishing_net
+    - big_fishing_net
+    - fishing_rod
+    - fly_fishing_rod
+    - harpoon
+    - lobster_pot
+    - fishing_bait
+    - feather
+  mining:
+    - bronze_pickaxe
+    - iron_pickaxe
+    - steel_pickaxe
+    - mithril_pickaxe
+    - adamant_pickaxe
+    - rune_pickaxe
+    - dragon_pickaxe
+    - prospector_helmet
+    - prospector_jacket
+    - prospector_legs
+    - prospector_boots
+  vengeance:
+    - astral_rune
+    - earth_rune
+    - death_rune
+  barrage:
+    - blood_rune
+    - death_rune
+    - water_rune
+  teleblock:
+    - law_rune
+    - chaos_rune
+    - death_rune
+  party_hats:
+    - red_partyhat
+    - blue_partyhat
+    - green_partyhat
+    - yellow_partyhat
+    - purple_partyhat
+    - white_partyhat

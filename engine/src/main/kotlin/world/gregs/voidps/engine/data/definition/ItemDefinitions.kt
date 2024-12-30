@@ -45,6 +45,10 @@ class ItemDefinitions(
         return this
     }
 
+    fun getItemIdByName(itemName: String): Int {
+        return ids[itemName] ?: -1
+    }
+
     @Suppress("UNCHECKED_CAST")
     private class CustomConfig(
         private val equipment: IntArray,
