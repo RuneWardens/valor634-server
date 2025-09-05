@@ -2,6 +2,7 @@ package world.gregs.voidps.engine.client.instruction
 
 import com.github.michaelbull.logging.InlineLogger
 import world.gregs.voidps.cache.definition.data.InterfaceComponentDefinition
+import world.gregs.voidps.engine.data.definition.EnumDefinitions
 import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
 import world.gregs.voidps.engine.data.definition.InventoryDefinitions
 import world.gregs.voidps.engine.data.definition.ItemDefinitions
@@ -12,7 +13,8 @@ import world.gregs.voidps.engine.inv.equipment
 class InterfaceHandler(
     private val itemDefinitions: ItemDefinitions,
     private val interfaceDefinitions: InterfaceDefinitions,
-    private val inventoryDefinitions: InventoryDefinitions
+    private val inventoryDefinitions: InventoryDefinitions,
+    private val enumDefinitions: EnumDefinitions,
 ) {
     private val logger = InlineLogger()
 
@@ -23,8 +25,23 @@ class InterfaceHandler(
         var item = Item.EMPTY
         var inventory = ""
         if (itemId != -1) {
-            inventory = getInventory(player, id, component, componentDefinition) ?: return null
-            item = getInventoryItem(player, id, componentDefinition, inventory, itemId, itemSlot) ?: return null
+            when {
+                id.startsWith("summoning_") && id.endsWith("_creation") -> item = Item(itemDefinitions.get(itemId).stringId)
+                id == "summoning_trade_in" -> item = Item(itemDefinitions.get(itemId).stringId)
+                id == "exchange_item_sets" -> {
+                    val expected = enumDefinitions.get("exchange_item_sets").getInt(itemSlot + 1)
+                    if (expected != itemId) {
+                        logger.info { "Exchange item sets don't match [$player, expected=$expected, actual=$itemId]" }
+                        return null
+                    }
+                    item = Item(itemDefinitions.get(expected).stringId)
+                }
+                id == "common_item_costs" -> item = Item(itemDefinitions.get(itemId).stringId)
+                else -> {
+                    inventory = getInventory(player, id, component, componentDefinition) ?: return null
+                    item = getInventoryItem(player, id, componentDefinition, inventory, itemId, itemSlot) ?: return null
+                }
+            }
         }
         return InterfaceData(id, component, item, inventory, componentDefinition.options)
     }
@@ -53,7 +70,13 @@ class InterfaceHandler(
             logger.info { "No inventory component found [$player, interface=$id, inventory=$component]" }
             return null
         }
-        val inventory = componentDefinition["inventory", ""]
+        if (id == "shop") {
+            return player["shop"]
+        }
+        var inventory = componentDefinition["inventory", ""]
+        if (id == "grand_exchange") {
+            inventory = "collection_box_${player["grand_exchange_box", -1]}"
+        }
         if (!player.inventories.contains(inventory)) {
             logger.info { "Player doesn't have interface inventory [$player, interface=$id, inventory=$inventory]" }
             return null
@@ -68,19 +91,24 @@ class InterfaceHandler(
             itemSlot == -1 && inventoryId == "item_loan" -> 0
             itemSlot == -1 && inventoryId == "returned_lent_items" -> 0
             id == "price_checker" -> itemSlot / 2
-            inventoryId == "inventory" -> itemSlot
+            id == "shop" -> itemSlot / 6
+            id == "grand_exchange" -> componentDefinition.stringId.removePrefix("collect_slot_").toInt()
             else -> itemSlot
         }
         val definition = inventoryDefinitions.get(inventoryId)
-        if (slot > definition.length || slot < 0) {
-            logger.info { "Player interface inventory out of bounds [$player, inventory=$inventoryId, item_index=$itemSlot, inventory_size=${definition.length}]" }
+        val secondary = !componentDefinition["primary", true]
+        val inventory = player.inventories.getOrNull(definition, secondary = secondary)
+        if (inventory == null) {
+            logger.info { "Player invalid interface inventory [$player, interface=$id, inv=$inventoryId]" }
+            return null
+        }
+        if (slot !in inventory.items.indices) {
+            logger.info { "Player interface inventory out of bounds [$player, slot=$slot, inventory=$inventoryId, item_index=$itemSlot, inventory_size=${definition.length}, indicies=${inventory.items.indices}]" }
             return null
         }
 
-        val secondary = !componentDefinition["primary", true]
-        val inventory = player.inventories.inventory(definition, secondary = secondary)
         if (!inventory.inBounds(slot) || inventory[slot].id != itemId) {
-            logger.info { "Player invalid interface item [$player, interface=$id, index=$slot, expected_item=$itemId, actual_item=${inventory[slot]}]" }
+            logger.info { "Player invalid interface item [$player, interface=$id, inv=$inventoryId, index=$slot, expected_item=$itemId, actual_item=${inventory[slot]}]" }
             return null
         }
         return inventory[slot]
@@ -92,7 +120,7 @@ data class InterfaceData(
     val component: String,
     val item: Item,
     val inventory: String,
-    val options: Array<String?>?
+    val options: Array<String?>?,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -107,7 +135,9 @@ data class InterfaceData(
         if (options != null) {
             if (other.options == null) return false
             if (!options.contentEquals(other.options)) return false
-        } else if (other.options != null) return false
+        } else if (other.options != null) {
+            return false
+        }
 
         return true
     }

@@ -1,76 +1,151 @@
 package world.gregs.voidps.engine.data
 
 import world.gregs.voidps.engine.data.config.AccountDefinition
+import world.gregs.voidps.engine.data.exchange.*
 import world.gregs.voidps.engine.entity.character.player.chat.clan.Clan
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * A backup storage method to use when the primary one fails
  */
 class SafeStorage(
-    private val directory: File
-) : AccountStorage {
+    private val directory: File,
+) : Storage {
 
     override fun names(): Map<String, AccountDefinition> = emptyMap()
 
     override fun clans(): Map<String, Clan> = emptyMap()
+
+    override fun offers(days: Int) = OpenOffers()
+
+    override fun claims(): Map<Int, Claim> = emptyMap()
+
+    override fun priceHistory(): Map<String, PriceHistory> = emptyMap()
+
+    override fun saveClaims(claims: Map<Int, Claim>) {
+        val parent = directory.resolve("grand_exchange/")
+        parent.mkdirs()
+        val file = parent.resolve("claimable_offers.toml")
+        file.writeText(
+            buildString {
+                for ((id, claim) in claims) {
+                    appendLine("$id = [${claim.amount}, ${claim.price}]")
+                }
+            },
+        )
+    }
+
+    override fun savePriceHistory(history: Map<String, PriceHistory>) {
+        val parent = directory.resolve("grand_exchange/price_history/")
+        parent.mkdirs()
+        for ((key, value) in history) {
+            val file = parent.resolve("$key.toml")
+            file.writeText(
+                buildString {
+                    appendLine("[day]")
+                    writeAggregates(this, value.day)
+                    appendLine("[week]")
+                    writeAggregates(this, value.week)
+                    appendLine("[month]")
+                    writeAggregates(this, value.month)
+                    appendLine("[year]")
+                    writeAggregates(this, value.year)
+                },
+            )
+        }
+    }
+
+    override fun saveOffers(offers: OpenOffers) {
+        val buy = directory.resolve(Settings["storage.grand.exchange.offers.buy.path"])
+        buy.mkdirs()
+        saveOffers(buy, offers.buyByItem)
+        val sell = directory.resolve(Settings["storage.grand.exchange.offers.sell.path"])
+        sell.mkdirs()
+        saveOffers(sell, offers.sellByItem)
+        val file = directory.resolve(Settings["storage.grand.exchange.offers.path"])
+        file.writeText("counter = ${offers.counter}")
+    }
+
+    private fun saveOffers(directory: File, byItem: Map<String, TreeMap<Int, MutableList<OpenOffer>>>) {
+        for ((item, map) in byItem) {
+            val file = directory.resolve("$item.toml")
+            file.writeText(
+                buildString {
+                    for ((price, list) in map) {
+                        for (offer in list) {
+                            appendLine("[${offer.id}]")
+                            appendLine("price = $price")
+                            appendLine("remaining = ${offer.remaining}")
+                            appendLine("coins = ${offer.coins}")
+                            appendLine("account = \"${offer.account}\"")
+                            appendLine("last_active = ${offer.lastActive}")
+                            appendLine()
+                        }
+                    }
+                },
+            )
+        }
+    }
+
+    private fun writeAggregates(stringBuilder: StringBuilder, frame: MutableMap<Long, Aggregate>) {
+        for ((timestamp, aggregate) in frame) {
+            stringBuilder.appendLine("$timestamp = [${aggregate.open}, ${aggregate.high}, ${aggregate.low}, ${aggregate.close}, ${aggregate.volume}, ${aggregate.count}, ${aggregate.averageHigh}, ${aggregate.averageLow}, ${aggregate.volumeHigh}, ${aggregate.volumeLow}]")
+        }
+    }
 
     override fun save(accounts: List<PlayerSave>) {
         directory.mkdirs()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
         val current = LocalDateTime.now().format(formatter)
         for (account in accounts) {
-            val file = directory.resolve("$current-${account.name}.json")
-            file.writeText(toJson(account))
+            val file = directory.resolve("$current-${account.name}.toml")
+            file.writeText(toToml(account))
         }
     }
 
-    private fun toJson(save: PlayerSave): String {
-        val variables = save.variables.toList().joinToString(",\n    ") { (key, value) ->
-            "\"${key}\": ${
-                when (value) {
-                    is String -> "\"${value}\""
-                    is Collection<*> -> if (value.all { it is String }) value.map { "\"${it}\"" } else value
-                    else -> value
-                }
-            }"
+    private fun toToml(save: PlayerSave): String = buildString {
+        appendLine("accountName = \"${save.name}\"")
+        appendLine("passwordHash = \"${save.password}\"")
+        appendLine("experience = [ ${save.experience.joinToString(", ")} ]")
+        appendLine("blocked_skills = [ ${save.blocked.joinToString(", ") { "\"${it.name}\"" }} ]")
+        appendLine("levels = [ ${save.levels.joinToString(", ")} ]")
+        appendLine("male = ${save.male}")
+        appendLine("looks = [ ${save.looks.joinToString(", ")} ]")
+        appendLine("colours = [ ${save.colours.joinToString(", ")} ]")
+        appendLine()
+        appendLine("[tile]")
+        appendLine("x = ${save.tile.x}")
+        appendLine("y = ${save.tile.y}")
+        appendLine("level = ${save.tile.level}")
+        appendLine()
+        appendLine("[variables]")
+        for ((key, value) in save.variables) {
+            appendLine(
+                "$key = ${
+                    when (value) {
+                        is String -> "\"${value}\""
+                        is Collection<*> -> "[${value.map { if (it is String) "\"${it}\"" else it }.joinToString(", ")}]"
+                        else -> value
+                    }
+                }",
+            )
         }
-        val inventories = save.inventories.toList()
-            .joinToString(",\n    ") { (id, items) -> "\"${id}\": [ ${items.joinToString(", ") { item -> if (item.isEmpty()) "{}" else "{ \"id\": \"${item.id}\", \"amount\": ${item.value} }" }} ]" }
-        return buildString {
-            appendLine("{")
-            appendLine("  \"accountName\": \"${save.name}\",")
-            appendLine("  \"passwordHash\": \"${save.password}\",")
-            appendLine("  \"tile\": {")
-            appendLine("    \"x\": ${save.tile.x},")
-            appendLine("    \"y\": ${save.tile.y},")
-            appendLine("    \"level\": ${save.tile.level}")
-            appendLine("  },")
-            appendLine("  \"experience\": {")
-            appendLine("    \"experience\": [ ${save.experience.joinToString(", ")} ],")
-            appendLine("    \"blocked\": [ ${save.blocked.joinToString(", ") { "\"${it.name}\"" }} ]")
-            appendLine("  },")
-            appendLine("  \"levels\": [ ${save.levels.joinToString(", ")} ],")
-            appendLine("  \"male\": ${save.male},")
-            appendLine("  \"looks\": [ ${save.looks.joinToString(", ")} ],")
-            appendLine("  \"colours\": [ ${save.colours.joinToString(", ")} ],")
-            appendLine("  \"variables\": {")
-            append("    ")
-            appendLine(variables)
-            appendLine("  },")
-            appendLine("  \"inventories\": {")
-            append("    ")
-            appendLine(inventories)
-            appendLine("  },")
-            appendLine("  \"friends\": {")
-            append("    ")
-            appendLine(save.friends.toList().joinToString(",") { "\"${it.first}\": \"${it.second}\"" })
-            appendLine("  },")
-            appendLine("  \"ignores\": [ ${save.ignores.joinToString(", ") { "\"${it}\"" }} ]")
-            append("}")
+        appendLine()
+        appendLine("[inventories]")
+        for ((inv, items) in save.inventories) {
+            appendLine("$inv = [${items.joinToString(", ") { if (it.isEmpty()) "{}" else "{id = \"${it.id}\", amount = ${it.amount}}" }}]")
         }
+        appendLine()
+        appendLine("[social]")
+        appendLine("friends = {${save.friends.toList().joinToString(", ") { "\"${it.first}\" = \"${it.second}\"" }}}")
+        appendLine("ignores = [${save.ignores.joinToString(", ") { "\"${it}\"" }}]")
+        appendLine()
+        appendLine("[exchange]")
+        appendLine("offers = [${save.offers.joinToString(", ") { if (it.isEmpty()) "{}" else "{id = ${it.id}, item = \"${it.item}\", amount = ${it.amount}, price = ${it.price}, state = \"${it.state.name}\", completed = ${it.completed}, coins = ${it.coins}}" }}]")
+        appendLine("history = [${save.history.joinToString(", ") { "{item = \"${it.item}\", amount = ${it.amount}, price = ${it.coins}}" }}]")
     }
 
     override fun exists(accountName: String): Boolean = false

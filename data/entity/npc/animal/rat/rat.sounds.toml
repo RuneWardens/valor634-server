@@ -1,0 +1,8 @@
+[rat_attack]
+id = 710
+
+[rat_defend]
+id = 713
+
+[rat_death]
+id = 711

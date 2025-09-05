@@ -1,12 +1,10 @@
 package world.gregs.voidps.tools.convert
 
-import world.gregs.voidps.cache.*
+import world.gregs.voidps.cache.CacheDelegate
 import world.gregs.voidps.cache.config.data.QuestDefinition
 import world.gregs.voidps.engine.data.definition.DefinitionsDecoder.Companion.toIdentifier
-import world.gregs.voidps.engine.data.definition.QuestDefinitions
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.type.Tile
-import world.gregs.yaml.Yaml
 import java.io.File
 
 /**
@@ -16,7 +14,7 @@ object RS3QuestConverter {
 
     @JvmStatic
     fun main(args: Array<String>) {
-//        val definitions = QuestDefinitions().load(Yaml(), "./data/definitions/quests.yml")
+//        val definitions = QuestDefinitions().load(Yaml(), "./data/interfaces/quests.toml")
         val rs3Cache = CacheDelegate(File("./temp/cache/cache-939-1").path)
 //        OpenRS2.downloadCache(cache, 1963)
         val decoder = QuestDecoderRS3().load(rs3Cache)
@@ -53,7 +51,7 @@ object RS3QuestConverter {
                 $identifier:
                   id: $questId
                   name: "${def.name}"
-            """.trimIndent()
+                """.trimIndent(),
             )
             if (def.difficulty != -1) {
                 println("  difficulty: ${def.difficulty}")

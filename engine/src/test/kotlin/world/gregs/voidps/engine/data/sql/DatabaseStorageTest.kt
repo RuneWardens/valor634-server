@@ -5,10 +5,12 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import world.gregs.voidps.engine.data.AccountStorageTest
 import world.gregs.voidps.engine.data.DatabaseTest
+import world.gregs.voidps.engine.data.StorageTest
 
-class DatabaseStorageTest : AccountStorageTest(), DatabaseTest {
+class DatabaseStorageTest :
+    StorageTest(),
+    DatabaseTest {
 
     override val storage = DatabaseStorage()
 

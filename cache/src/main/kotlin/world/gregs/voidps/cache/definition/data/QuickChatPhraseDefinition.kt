@@ -11,8 +11,9 @@ data class QuickChatPhraseDefinition(
     var ids: Array<IntArray>? = null,
     var types: IntArray? = null,
     override var stringId: String = "",
-    override var extras: Map<String, Any>? = null
-) : Definition, Extra {
+    override var extras: Map<String, Any>? = null,
+) : Definition,
+    Extra {
 
     fun buildString(enums: Array<EnumDefinition>, items: Array<ItemDefinition>, data: ByteArray) = buildString(80) {
         val (_, stringParts, _, ids, types) = this@QuickChatPhraseDefinition
@@ -21,12 +22,20 @@ data class QuickChatPhraseDefinition(
                 val reader = BufferReader(data)
                 for (index in types.indices) {
                     append(stringParts[index])
-                    val count = QuickChatType.getType(types[index])?.bitCount ?: 0
-                    val key = reader.readBits(count)
-                    val string = when (getType(index)) {
+                    val type = getType(index)
+                    val key = when (type?.byteCount) {
+                        4 -> reader.readInt()
+                        2 -> reader.readShort()
+                        1 -> reader.readByte()
+                        else -> 0
+                    }
+                    val string = when (type) {
                         QuickChatType.MultipleChoice -> enums[ids[index].first()].getString(key)
                         QuickChatType.AllItems, QuickChatType.TradeItems -> items[key].name
-                        QuickChatType.SlayerAssignment, QuickChatType.ClanRank, QuickChatType.SkillExperience -> enums[ids[index].first()].getString(key)
+                        QuickChatType.SlayerAssignment -> {
+                            enums[ids[index].first()].getString(key)
+                        }
+                        QuickChatType.ClanRank, QuickChatType.SkillExperience -> enums[ids[index].first()].getString(key)
                         else -> key.toString()
                     }
                     append(string)
@@ -40,9 +49,7 @@ data class QuickChatPhraseDefinition(
         return QuickChatType.getType(types?.getOrNull(index) ?: return null)
     }
 
-    override fun toString(): String {
-        return "QuickChatOptionDefinition(id=$id, stringParts=${stringParts?.contentToString()}, options=${responses?.contentToString()}, ids=${ids?.contentDeepToString()}, types=${types?.contentToString()})"
-    }
+    override fun toString(): String = "QuickChatOptionDefinition(id=$id, stringParts=${stringParts?.contentToString()}, options=${responses?.contentToString()}, ids=${ids?.contentDeepToString()}, types=${types?.contentToString()})"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -54,19 +61,27 @@ data class QuickChatPhraseDefinition(
         if (stringParts != null) {
             if (other.stringParts == null) return false
             if (!stringParts.contentEquals(other.stringParts)) return false
-        } else if (other.stringParts != null) return false
+        } else if (other.stringParts != null) {
+            return false
+        }
         if (responses != null) {
             if (other.responses == null) return false
             if (!responses.contentEquals(other.responses)) return false
-        } else if (other.responses != null) return false
+        } else if (other.responses != null) {
+            return false
+        }
         if (ids != null) {
             if (other.ids == null) return false
             if (!ids.contentDeepEquals(other.ids)) return false
-        } else if (other.ids != null) return false
+        } else if (other.ids != null) {
+            return false
+        }
         if (types != null) {
             if (other.types == null) return false
             if (!types.contentEquals(other.types)) return false
-        } else if (other.types != null) return false
+        } else if (other.types != null) {
+            return false
+        }
         if (stringId != other.stringId) return false
         if (extras != other.extras) return false
 

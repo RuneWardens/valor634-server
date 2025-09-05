@@ -7,7 +7,7 @@ import world.gregs.voidps.cache.config.data.WorldMapInfoDefinition
 import world.gregs.voidps.cache.definition.Parameters
 
 class WorldMapInfoDecoder(
-    private val parameters: Parameters = Parameters.EMPTY
+    private val parameters: Parameters = Parameters.EMPTY,
 ) : ConfigDecoder<WorldMapInfoDefinition>(WORLD_MAP_INFO) {
 
     override fun create(size: Int) = Array(size) { WorldMapInfoDefinition(it) }
@@ -26,7 +26,7 @@ class WorldMapInfoDecoder(
                     aBoolean1047 = false
                 }
                 if (setting and 0x2 == 2) {
-                    aBoolean1079 = true
+                    hiddenOnWorldMap = true
                 }
             }
             8 -> aBoolean1063 = buffer.readUnsignedByte() == 1

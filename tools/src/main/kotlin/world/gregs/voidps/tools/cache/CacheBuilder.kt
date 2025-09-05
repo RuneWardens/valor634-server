@@ -2,6 +2,7 @@ package world.gregs.voidps.tools.cache
 
 import com.displee.cache.CacheLibrary
 import world.gregs.voidps.cache.FileCache
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.tools.convert.DefinitionsParameterConverter
 import world.gregs.voidps.tools.convert.InventoryConverter
 import world.gregs.voidps.tools.map.MapPacker
@@ -15,7 +16,8 @@ object CacheBuilder {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val target = File("./data/cache/")
+        Settings.load()
+        val target = File(Settings["storage.cache.path"])
 
         val cache727 = File("${System.getProperty("user.home")}/Downloads/727 cache with most xteas/")
         if (!cache727.exists()) {
@@ -55,10 +57,14 @@ object CacheBuilder {
         val cache667 = OpenRS2.downloadCache(temp.resolve("cache-667/"), 1473)
         val library = CacheLibrary(path.path)
         RemoveXteas.remove(library, xteas)
-//        RemoveBzip2.remove(library)
+        RemoveBzip2.remove(library)
+        ValidateMapObjects.validateAll(library)
         CopyCs2Script.convert(library, cache667, 677) // Scroll interface - scrollbar max
         RemovePriceCheckerTradeLimit.convert(library)
         MoveCameraClientScript.convert(library, cache667)
+        FixStructs.fix(library)
+        FixItems.fix(library)
+        FixEnums.fix(library)
         println("Rebuilding cache.")
         library.rebuild(target)
         addEmptyIndexFiles(target, library.last()?.id ?: 0)
@@ -68,7 +74,7 @@ object CacheBuilder {
     private fun checkCacheOverride(path: File) {
         val idx = path.resolve("${FileCache.CACHE_FILE_NAME}.dat2")
         if (idx.exists()) {
-            println("Cache exists at '${path}' continuing will override.")
+            println("Cache exists at '$path' continuing will override.")
             System.err.println("Continuing will delete the current cache. Are you sure?")
             if (!readln().startsWith("y", ignoreCase = true)) {
                 println("Cancelled.")

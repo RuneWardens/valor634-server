@@ -5,7 +5,7 @@ import world.gregs.voidps.engine.event.EventDispatcher
 
 class VariableBits(
     private val variables: Variables,
-    private val events: EventDispatcher
+    private val events: EventDispatcher,
 ) {
 
     fun contains(key: String, id: Any): Boolean {
@@ -14,7 +14,7 @@ class VariableBits(
     }
 
     fun set(key: String, value: Any, refresh: Boolean): Boolean {
-        val values: MutableList<Any> = variables.getOrPut(key) { ObjectArrayList<Any>().apply { add(value) } }
+        val values: MutableList<Any> = variables.getOrPut(key) { ObjectArrayList() }
         if (!values.contains(value) && values.add(value)) {
             if (refresh) {
                 variables.send(key)

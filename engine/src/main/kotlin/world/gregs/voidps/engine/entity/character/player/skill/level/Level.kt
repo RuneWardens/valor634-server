@@ -31,11 +31,22 @@ object Level {
     }
 
     /**
+     * Calculates random chance of being successful
+     * @param level The players current level
+     * @param maxLevel The maximum level to fail at
+     * @param minChance The chance rate (out of [MAX_CHANCE]) at level 1
+     * @return success
+     */
+    fun success(level: Int, maxLevel: Int, minChance: Int = 1): Boolean {
+        val chance = chance(level, minChance..MAX_CHANCE, maxLevel)
+        val random = random.nextInt(MAX_CHANCE)
+        return chance > random
+    }
+
+    /**
      * The chance of being successful (out of [MAX_CHANCE])
      */
-    private fun chance(level: Int, chances: IntRange): Int {
-        return interpolate(level.coerceIn(MIN_LEVEL, MAX_LEVEL), chances.first, chances.last, MIN_LEVEL, MAX_LEVEL)
-    }
+    private fun chance(level: Int, chances: IntRange, maxLevel: Int = MAX_LEVEL): Int = interpolate(level.coerceIn(MIN_LEVEL, MAX_LEVEL), chances.first, chances.last, MIN_LEVEL, maxLevel)
 
     fun experience(skill: Skill, level: Int) = experience(if (skill == Skill.Constitution) level / 10 else level)
 
@@ -44,10 +55,12 @@ object Level {
 
     fun experienceAt(level: Int) = (level + 300.0 * 2.0.pow(level / 7.0)).toInt()
 
-    fun Player.has(skill: Skill, level: Int, message: Boolean = false): Boolean {
+    fun Player.has(skill: Skill, level: Int, message: Boolean): Boolean = has(skill, level, if (message) "" else null)
+
+    fun Player.has(skill: Skill, level: Int, message: String? = null): Boolean {
         if (levels.get(skill) < level) {
-            if (message) {
-                message("You need to have${skill.name.an()} ${skill.name} level of ${if (skill == Skill.Constitution) level / 10 else level}.")
+            if (message != null) {
+                message("You need to have${skill.name.an()} ${skill.name} level of ${if (skill == Skill.Constitution) level / 10 else level}$message.")
             }
             return false
         }
@@ -78,7 +91,7 @@ object Level {
         val requirements: Map<Skill, Int>? = item.def.getOrNull("equip_req")
         if (requirements != null) {
             for ((skill, level) in requirements) {
-                if (if (skill == Skill.Prayer) !hasMax(skill, level, message) else !has(skill, level, message)) {
+                if (!hasMax(skill, level, message)) {
                     return false
                 }
             }
@@ -94,5 +107,4 @@ object Level {
         val level: Int = item.def.getOrNull("secondary_use_level") ?: return true
         return has(skill, level, message)
     }
-
 }

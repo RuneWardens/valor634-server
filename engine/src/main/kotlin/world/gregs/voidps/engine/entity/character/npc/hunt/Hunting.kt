@@ -7,7 +7,7 @@ import world.gregs.voidps.engine.client.variable.hasClock
 import world.gregs.voidps.engine.data.config.HuntModeDefinition
 import world.gregs.voidps.engine.data.definition.HuntModeDefinitions
 import world.gregs.voidps.engine.entity.character.Character
-import world.gregs.voidps.engine.entity.character.CharacterList
+import world.gregs.voidps.engine.entity.character.CharacterSearch
 import world.gregs.voidps.engine.entity.character.mode.move.hasLineOfSight
 import world.gregs.voidps.engine.entity.character.mode.move.hasLineOfWalk
 import world.gregs.voidps.engine.entity.character.npc.NPC
@@ -15,7 +15,6 @@ import world.gregs.voidps.engine.entity.character.npc.NPCs
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.Players
 import world.gregs.voidps.engine.entity.character.player.combatLevel
-import world.gregs.voidps.engine.entity.character.size
 import world.gregs.voidps.engine.entity.item.floor.FloorItem
 import world.gregs.voidps.engine.entity.item.floor.FloorItems
 import world.gregs.voidps.engine.entity.obj.GameObject
@@ -43,13 +42,13 @@ class Hunting(
     private val floorItems: FloorItems,
     private val huntModes: HuntModeDefinitions,
     private val lineValidator: LineValidator,
-    private val seed: Random = random
+    private val seed: Random = random,
 ) : Runnable {
 
     override fun run() {
         for (npc in npcs) {
             val mode: String = npc["hunt_mode"] ?: npc.def.getOrNull("hunt_mode") ?: continue
-            if (mode == "null" || npc.hasClock("delay") || npc.dec("hunt_count_down") >= 0) {
+            if (mode == "" || npc.contains("delay") || npc.dec("hunt_count_down") >= 0) {
                 continue
             }
             val range = npc.def["hunt_range", 5]
@@ -59,22 +58,22 @@ class Hunting(
                 "player" -> {
                     val targets = getCharacters(npc, players, range, definition)
                     val target = targets.randomOrNull(seed) ?: continue
-                    npc.emit(HuntPlayer(mode, target))
+                    npc.emit(HuntPlayer(mode, targets, target))
                 }
                 "npc" -> {
                     val targets = getCharacters(npc, npcs, range, definition)
                     val target = targets.randomOrNull(seed) ?: continue
-                    npc.emit(HuntNPC(mode, target))
+                    npc.emit(HuntNPC(mode, targets, target))
                 }
                 "object" -> {
                     val targets = getObjects(npc, definition)
                     val target = targets.randomOrNull(seed) ?: continue
-                    npc.emit(HuntObject(mode, target))
+                    npc.emit(HuntObject(mode, targets, target))
                 }
                 "floor_item" -> {
                     val targets = getItems(npc, range, definition)
                     val target = targets.randomOrNull(seed) ?: continue
-                    npc.emit(HuntFloorItem(mode, target))
+                    npc.emit(HuntFloorItem(mode, targets, target))
                 }
             }
         }
@@ -86,7 +85,7 @@ class Hunting(
     private fun getItems(
         npc: NPC,
         range: Int,
-        definition: HuntModeDefinition
+        definition: HuntModeDefinition,
     ): MutableList<FloorItem> {
         val targets = ObjectArrayList<FloorItem>()
         for (zone in npc.tile.zone.toRectangle(ceil(range / 8.0).toInt()).toZonesReversed(npc.tile.level)) {
@@ -115,7 +114,7 @@ class Hunting(
      */
     private fun getObjects(
         npc: NPC,
-        definition: HuntModeDefinition
+        definition: HuntModeDefinition,
     ): ObjectArrayList<GameObject> {
         val targets = ObjectArrayList<GameObject>()
         val queue: Queue<Tile> = LinkedList()
@@ -138,7 +137,7 @@ class Hunting(
         definition: HuntModeDefinition,
         npc: NPC,
         targets: MutableList<GameObject>,
-        directions: List<Direction>
+        directions: List<Direction>,
     ): Boolean {
         for (direction in directions) {
             val tile = parent.add(direction)
@@ -165,9 +164,9 @@ class Hunting(
      */
     private fun <T : Character> getCharacters(
         npc: NPC,
-        characterList: CharacterList<T>,
+        characterList: CharacterSearch<T>,
         range: Int,
-        definition: HuntModeDefinition
+        definition: HuntModeDefinition,
     ): MutableList<T> {
         val targets = mutableListOf<T>()
         for (zone in npc.tile.zone.toRectangle(ceil(range / 8.0).toInt()).toZonesReversed(npc.tile.level)) {
@@ -193,7 +192,7 @@ class Hunting(
         npc: NPC,
         target: Character,
         definition: HuntModeDefinition,
-        range: Int
+        range: Int,
     ): Boolean {
         // Npc checks from south-west tile
         if (target.tile.distanceTo(npc.tile) > range) {
@@ -214,22 +213,34 @@ class Hunting(
         if (definition.checkAfk && !target.hasClock("tolerance")) {
             return false
         }
-        if (definition.checkNotBusy && (target.hasClock("delay") || target.hasMenuOpen())) {
+        if (definition.checkNotBusy && (target.contains("delay") || target.hasMenuOpen())) {
+            return false
+        }
+        if (definition.checkSameGod && target is Player && wearsGodArmour(npc, target)) {
+            return false
+        }
+        if (definition.checkZamorak && target is NPC && target.def["god", ""] != "zamorak") {
+            return false
+        }
+        if (definition.checkNotZamorak && target is NPC && target.def["god", ""] == "zamorak") {
             return false
         }
         return true
     }
 
-    private fun targetTooStrong(npc: NPC, character: Character): Boolean {
-        return character is Player && character.combatLevel > npc.def.combat * 2
+    private fun wearsGodArmour(npc: NPC, target: Player): Boolean {
+        val gods = target.get<Set<String>>("gods") ?: return false
+        return gods.contains("zaros") || gods.contains(npc.def["god", ""])
     }
+
+    private fun targetTooStrong(npc: NPC, character: Character): Boolean = character is Player && character.combatLevel > npc.def.combat * 2
 
     private fun canSee(
         npc: NPC,
         tile: Tile,
         width: Int,
         height: Int,
-        definition: HuntModeDefinition
+        definition: HuntModeDefinition,
     ) = when (definition.checkVisual) {
         "line_of_sight" -> lineValidator.hasLineOfSight(npc, tile, width, height)
         "line_of_walk" -> lineValidator.hasLineOfWalk(npc, tile, width, height)

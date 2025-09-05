@@ -11,103 +11,90 @@ import world.gregs.voidps.network.login.protocol.*
 
 /**
  * Sends an animation to an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param animation The animation id
  */
 fun Client.animateInterface(
-    id: Int,
-    component: Int,
-    animation: Int
+    interfaceComponent: Int,
+    animation: Int,
 ) = send(INTERFACE_ANIMATION) {
     writeShort(animation)
-    writeIntMiddle(id shl 16 or component)
+    writeIntMiddle(interfaceComponent)
 }
 
 /**
  * Closes a client interface
- * @param id The id of the parent interface
- * @param component The index of the component to close
+ * @param interfaceComponent Packed component index and id of the parent window
  */
 fun Client.closeInterface(
-    id: Int,
-    component: Int
+    interfaceComponent: Int,
 ) = send(Protocol.INTERFACE_CLOSE) {
-    writeInt(id shl 16 or component)
+    writeInt(interfaceComponent)
 }
 
 /**
  * Sends a colour to an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param red red value out of 32
  * @param green green value out of 32
  * @param blue blue value out of 32
  */
 fun Client.colourInterface(
-    id: Int,
-    component: Int,
+    interfaceComponent: Int,
     red: Int,
     green: Int,
-    blue: Int
-) = colourInterface(id, component, (red shl 10) + (green shl 5) + blue)
+    blue: Int,
+) = colourInterface(interfaceComponent, (red shl 10) + (green shl 5) + blue)
 
 /**
  * Sends a colour to an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
+ * @param colour The colour to send
  */
 fun Client.colourInterface(
-    id: Int,
-    component: Int,
-    colour: Int
+    interfaceComponent: Int,
+    colour: Int,
 ) = send(Protocol.INTERFACE_COLOUR) {
     writeShortAdd(colour)
-    writeIntLittle(id shl 16 or component)
+    writeIntLittle(interfaceComponent)
 }
 
 /**
  * Sends npc who's head to display on an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param npc The id of the npc
  */
 fun Client.npcDialogueHead(
-    id: Int,
-    component: Int,
-    npc: Int
+    interfaceComponent: Int,
+    npc: Int,
 ) = send(Protocol.INTERFACE_NPC_HEAD) {
-    writeIntLittle(id shl 16 or component)
+    writeIntLittle(interfaceComponent)
     writeShortAdd(npc)
 }
 
 /**
  * Sends command to display the players head on an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  */
 fun Client.playerDialogueHead(
-    id: Int,
-    component: Int
+    interfaceComponent: Int,
 ) = send(Protocol.INTERFACE_PLAYER_HEAD) {
-    writeIntMiddle(id shl 16 or component)
+    writeIntMiddle(interfaceComponent)
 }
 
 /**
  * Sends an item to display on an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param item The item id
  * @param amount The number of the item
  */
 fun Client.interfaceItem(
-    id: Int,
-    component: Int,
+    interfaceComponent: Int,
     item: Int,
-    amount: Int
+    amount: Int,
 ) = send(Protocol.INTERFACE_ITEM) {
     writeShortLittle(item)
-    writeIntInverseMiddle(id shl 16 or component)
+    writeIntInverseMiddle(interfaceComponent)
     writeInt(amount)
 }
 
@@ -120,7 +107,7 @@ fun Client.interfaceItem(
 fun Client.sendInterfaceItemUpdate(
     key: Int,
     updates: List<Triple<Int, Int, Int>>,
-    secondary: Boolean
+    secondary: Boolean,
 ) = send(Protocol.INTERFACE_ITEMS_UPDATE, getLength(updates), SHORT) {
     writeShort(key)
     writeByte(secondary)
@@ -136,98 +123,85 @@ fun Client.sendInterfaceItemUpdate(
     }
 }
 
-private fun getLength(updates: List<Triple<Int, Int, Int>>): Int {
-    return 3 + updates.sumOf { (index, item, amount) -> smart(index) + if (item >= 0) if (amount >= 255) 7 else 3 else 2 }
-}
+private fun getLength(updates: List<Triple<Int, Int, Int>>): Int = 3 + updates.sumOf { (index, item, amount) -> smart(index) + if (item >= 0) if (amount >= 255) 7 else 3 else 2 }
 
 /**
  * Displays an interface onto the client screen
  * @param permanent Whether the interface should be removed on player movement
- * @param parent The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param id The id of the interface to display
  */
 fun Client.openInterface(
     permanent: Boolean,
-    parent: Int,
-    component: Int,
-    id: Int
+    interfaceComponent: Int,
+    id: Int,
 ) = send(Protocol.INTERFACE_OPEN) {
     writeShortLittle(id)
-    writeIntLittle(parent shl 16 or component)
+    writeIntLittle(interfaceComponent)
     writeByteAdd(permanent)
 }
 
 /**
  * Sends settings to an interface's component(s)
- * @param id The id of the parent window
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param fromSlot The start slot index
  * @param toSlot The end slot index
  * @param settings The settings hash
  */
 fun Client.sendInterfaceSettings(
-    id: Int,
-    component: Int,
+    interfaceComponent: Int,
     fromSlot: Int,
     toSlot: Int,
-    settings: Int
+    settings: Int,
 ) = send(Protocol.INTERFACE_COMPONENT_SETTINGS) {
     writeShortAdd(toSlot)
     writeShortLittle(fromSlot)
-    writeInt(id shl 16 or component)
+    writeInt(interfaceComponent)
     writeIntInverseMiddle(settings)
 }
 
 /**
  * Sends vertical height to an interfaces' component
- * @param id The id of the parent window
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param settings The settings hash
  */
 fun Client.sendInterfaceScroll(
-    id: Int,
-    component: Int,
-    settings: Int
+    interfaceComponent: Int,
+    settings: Int,
 ) = send(Protocol.INTERFACE_SCROLL_VERTICAL) {
-    writeIntInverseMiddle(id shl 16 or component)
+    writeIntInverseMiddle(interfaceComponent)
     writeShortAdd(settings)
 }
 
 /**
  * Sends a sprite to an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param sprite The sprite id
  */
 fun Client.interfaceSprite(
-    id: Int,
-    component: Int,
-    sprite: Int
+    interfaceComponent: Int,
+    sprite: Int,
 ) = send(Protocol.INTERFACE_SPRITE) {
     writeShortAdd(sprite)
-    writeIntInverseMiddle(id shl 16 or component)
+    writeIntInverseMiddle(interfaceComponent)
 }
 
 /**
  * Update the text of an interface component
- * @param id The id of the parent interface
- * @param component The index of the component
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param text The text to send
  */
 fun Client.interfaceText(
-    id: Int,
-    component: Int,
-    text: String
+    interfaceComponent: Int,
+    text: String,
 ) = send(Protocol.INTERFACE_TEXT, 4 + string(text), SHORT) {
-    writeIntLittle(id shl 16 or component)
+    writeIntLittle(interfaceComponent)
     writeString(text)
 }
 
-
 fun Client.updateInterface(
     id: Int,
-    type: Int
+    type: Int,
 ) = send(Protocol.INTERFACE_WINDOW) {
     writeByteInverse(type)
     writeShortAdd(id)
@@ -235,15 +209,40 @@ fun Client.updateInterface(
 
 /**
  * Toggles an interface component
- * @param id The parent interface id
- * @param component The component to change
+ * @param interfaceComponent Packed component index and id of the parent window
  * @param hide Visibility
  */
 fun Client.interfaceVisibility(
-    id: Int,
-    component: Int,
-    hide: Boolean
+    interfaceComponent: Int,
+    hide: Boolean,
 ) = send(Protocol.INTERFACE_COMPONENT_VISIBILITY) {
     writeByteAdd(hide)
-    writeIntLittle(id shl 16 or component)
+    writeIntLittle(interfaceComponent)
+}
+
+/**
+ * Send an update to grand exchange slot
+ * @param slot offer slot
+ * @param state the offer state 1 - submitting, 2 - open, 5 - cancelled
+ * @param item item id
+ * @param price price per item
+ * @param amount quantity of items in offer
+ * @param sold number of items sold so far
+ * @param coins number of coins received
+ */
+fun Client.grandExchange(slot: Int, state: Int = 0, item: Int = 0, price: Int = 0, amount: Int = 0, sold: Int = 0, coins: Int = 0) = send(Protocol.GRAND_EXCHANGE_SLOT) {
+    writeByte(slot)
+    writeByte(state)
+    writeShort(item)
+    writeInt(price)
+    writeInt(amount)
+    writeInt(sold)
+    writeInt(coins)
+}
+
+/**
+ * Send system update timer
+ */
+fun Client.systemUpdate(ticks: Int) = send(Protocol.SYSTEM_UPDATE) {
+    writeShort(ticks)
 }

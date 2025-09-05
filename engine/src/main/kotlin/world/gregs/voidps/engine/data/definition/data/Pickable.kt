@@ -1,5 +1,7 @@
 package world.gregs.voidps.engine.data.definition.data
 
+import world.gregs.config.ConfigReader
+
 /**
  * @param item id of the item given
  * @param respawnDelay seconds until object is respawned
@@ -7,16 +9,28 @@ package world.gregs.voidps.engine.data.definition.data
  */
 data class Pickable(
     val item: String = "",
+    val chance: Int = 1,
     val respawnDelay: Int = -1,
-    val message: String = ""
+    val message: String = "",
 ) {
     companion object {
 
-        operator fun invoke(map: Map<String, Any>) = Pickable(
-            item = (map["item"] as? String) ?: EMPTY.item,
-            respawnDelay = map["delay"] as? Int ?: EMPTY.respawnDelay,
-            message = map["message"] as? String ?: EMPTY.message,
-        )
+        operator fun invoke(reader: ConfigReader): Pickable {
+            var item = ""
+            var delay = -1
+            var chance = 1
+            var message = ""
+            while (reader.nextEntry()) {
+                when (val key = reader.key()) {
+                    "item" -> item = reader.string()
+                    "delay" -> delay = reader.int()
+                    "chance" -> chance = reader.int()
+                    "message" -> message = reader.string()
+                    else -> throw IllegalArgumentException("Unexpected key: '$key' ${reader.exception()}")
+                }
+            }
+            return Pickable(item = item, chance = chance, respawnDelay = delay, message = message)
+        }
 
         val EMPTY = Pickable()
     }

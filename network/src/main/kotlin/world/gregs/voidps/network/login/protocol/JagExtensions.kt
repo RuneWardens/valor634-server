@@ -12,13 +12,9 @@ suspend fun ByteReadChannel.readUByte(): Int = readByte().toInt() and 0xff
 
 suspend fun ByteReadChannel.readUShort(): Int = (readUByte() shl 8) or readUByte()
 
-suspend fun ByteReadChannel.readMedium(): Int {
-    return (readByte().toInt() shl 16) + (readByte().toInt() shl 8) + readByte().toInt()
-}
+suspend fun ByteReadChannel.readMedium(): Int = (readByte().toInt() shl 16) + (readByte().toInt() shl 8) + readByte().toInt()
 
-suspend fun ByteReadChannel.readUMedium(): Int {
-    return (readUByte() shl 16) + (readUByte() shl 8) + readUByte()
-}
+suspend fun ByteReadChannel.readUMedium(): Int = (readUByte() shl 16) + (readUByte() shl 8) + readUByte()
 
 suspend fun ByteWriteChannel.writeByte(value: Boolean) = writeByte(if (value) 1 else 0)
 
@@ -175,7 +171,7 @@ fun ByteReadPacket.readByteSubtract(): Int = (readByteInverse() + 128).toByte().
 
 fun ByteReadPacket.readShortAdd(): Int = (readByte().toInt() shl 8) or readByteAdd()
 
-fun ByteReadPacket.readShortAddLittle(): Int = ((readByte().toInt() - 128) and 0xff) or ((readByte().toInt() shl 8) and 0xff00)
+fun ByteReadPacket.readShortAddLittle(): Int = ((readByte().toInt() - 128) and 0xff) or (readByte().toInt() shl 8)
 
 fun ByteReadPacket.readUnsignedShortAdd(): Int = (readByte().toInt() shl 8) or ((readByte() - 128) and 0xff)
 

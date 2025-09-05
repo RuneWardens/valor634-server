@@ -12,7 +12,7 @@ data class WorldMapInfoDefinition(
     var anInt1054: Int = -1,
     var fontSize: Int = 0,
     var aBoolean1047: Boolean = true,
-    var aBoolean1079: Boolean = false,
+    var hiddenOnWorldMap: Boolean = false,
     var aBoolean1063: Boolean = true,
     var varbit: Int = -1,
     var varp: Int = -1,
@@ -43,8 +43,9 @@ data class WorldMapInfoDefinition(
     var anInt1051: Int = 2147483647,
     var anInt1060: Int = -2147483648,
     override var stringId: String = "",
-    override var extras: Map<String, Any>? = null
-) : Definition, Extra {
+    override var extras: Map<String, Any>? = null,
+) : Definition,
+    Extra {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -59,7 +60,7 @@ data class WorldMapInfoDefinition(
         if (anInt1054 != other.anInt1054) return false
         if (fontSize != other.fontSize) return false
         if (aBoolean1047 != other.aBoolean1047) return false
-        if (aBoolean1079 != other.aBoolean1079) return false
+        if (hiddenOnWorldMap != other.hiddenOnWorldMap) return false
         if (aBoolean1063 != other.aBoolean1063) return false
         if (varbit != other.varbit) return false
         if (varp != other.varp) return false
@@ -69,16 +70,22 @@ data class WorldMapInfoDefinition(
         if (anIntArray1049 != null) {
             if (other.anIntArray1049 == null) return false
             if (!anIntArray1049.contentEquals(other.anIntArray1049)) return false
-        } else if (other.anIntArray1049 != null) return false
+        } else if (other.anIntArray1049 != null) {
+            return false
+        }
         if (anInt1084 != other.anInt1084) return false
         if (anIntArray1066 != null) {
             if (other.anIntArray1066 == null) return false
             if (!anIntArray1066.contentEquals(other.anIntArray1066)) return false
-        } else if (other.anIntArray1066 != null) return false
+        } else if (other.anIntArray1066 != null) {
+            return false
+        }
         if (aByteArray1057 != null) {
             if (other.aByteArray1057 == null) return false
             if (!aByteArray1057.contentEquals(other.aByteArray1057)) return false
-        } else if (other.aByteArray1057 != null) return false
+        } else if (other.aByteArray1057 != null) {
+            return false
+        }
         if (aBoolean1064 != other.aBoolean1064) return false
         if (aString1045 != other.aString1045) return false
         if (anInt1093 != other.anInt1093) return false
@@ -113,7 +120,7 @@ data class WorldMapInfoDefinition(
         result = 31 * result + anInt1054
         result = 31 * result + fontSize
         result = 31 * result + aBoolean1047.hashCode()
-        result = 31 * result + aBoolean1079.hashCode()
+        result = 31 * result + hiddenOnWorldMap.hashCode()
         result = 31 * result + aBoolean1063.hashCode()
         result = 31 * result + varbit
         result = 31 * result + varp

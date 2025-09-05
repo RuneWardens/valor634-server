@@ -4,6 +4,7 @@ import com.github.michaelbull.logging.InlineLogger
 import world.gregs.voidps.engine.client.instruction.InstructionHandler
 import world.gregs.voidps.engine.client.instruction.handle.ObjectOptionHandler.Companion.getDefinition
 import world.gregs.voidps.engine.client.message
+import world.gregs.voidps.engine.client.ui.closeInterfaces
 import world.gregs.voidps.engine.client.ui.dialogue.talkWith
 import world.gregs.voidps.engine.client.variable.hasClock
 import world.gregs.voidps.engine.data.definition.NPCDefinitions
@@ -17,13 +18,13 @@ import world.gregs.voidps.network.client.instruction.InteractNPC
 
 class NPCOptionHandler(
     private val npcs: NPCs,
-    private val definitions: NPCDefinitions
+    private val definitions: NPCDefinitions,
 ) : InstructionHandler<InteractNPC>() {
 
     private val logger = InlineLogger()
 
     override fun validate(player: Player, instruction: InteractNPC) {
-        if (player.hasClock("delay") || player.hasClock("input_delay")) {
+        if (player.contains("delay")) {
             return
         }
         val npc = npcs.indexed(instruction.npcIndex) ?: return
@@ -49,8 +50,8 @@ class NPCOptionHandler(
             player.message("You're stunned!", ChatType.Filter)
             return
         }
+        player.closeInterfaces()
         player.talkWith(npc, definition)
         player.mode = Interact(player, npc, NPCOption(player, npc, definition, selectedOption))
     }
-
 }

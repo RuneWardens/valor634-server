@@ -5,11 +5,20 @@ import org.koin.core.component.KoinComponent
 import world.gregs.voidps.engine.GameLoop
 import world.gregs.voidps.engine.client.variable.Variable
 import world.gregs.voidps.engine.client.variable.Variables
+import world.gregs.voidps.engine.data.Settings
+import world.gregs.voidps.engine.data.list
+import world.gregs.voidps.engine.entity.character.npc.NPCs
+import world.gregs.voidps.engine.entity.character.npc.loadNpcSpawns
+import world.gregs.voidps.engine.entity.item.floor.FloorItems
+import world.gregs.voidps.engine.entity.item.floor.ItemSpawns
+import world.gregs.voidps.engine.entity.item.floor.loadItemSpawns
+import world.gregs.voidps.engine.entity.obj.GameObjects
+import world.gregs.voidps.engine.entity.obj.loadObjectSpawns
 import world.gregs.voidps.engine.event.EventDispatcher
+import world.gregs.voidps.engine.get
 import world.gregs.voidps.engine.timer.TimerQueue
 import world.gregs.voidps.engine.timer.Timers
 import world.gregs.voidps.type.Tile
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 const val MAX_PLAYERS = 0x800 // 2048
@@ -21,25 +30,13 @@ object World : Entity, Variable, EventDispatcher, Runnable, KoinComponent {
     override val variables = Variables(this)
     private val logger = InlineLogger()
 
-    var id = 0
-        private set(value) {
-            field = value
-            name = "World $value"
-        }
-    var name: String = "World"
-        private set
-    var members: Boolean = false
-        private set
+    val members: Boolean
+        get() = Settings["world.members", false]
 
-    fun start(properties: Properties) {
-        val members = properties.getProperty("members").toBoolean()
-        val id = properties.getProperty("world").toInt()
-        start(members, id)
-    }
-
-    fun start(members: Boolean = true, id: Int = 16) {
-        this.members = members
-        this.id = id
+    fun start(files: Map<String, List<String>>) {
+        loadItemSpawns(get<FloorItems>(), get<ItemSpawns>(), files.list(Settings["spawns.items"]), get())
+        loadObjectSpawns(get<GameObjects>(), files.list(Settings["spawns.objects"]), get())
+        loadNpcSpawns(get<NPCs>(), files.list(Settings["spawns.npcs"]), get())
         emit(Spawn)
     }
 
@@ -50,6 +47,8 @@ object World : Entity, Variable, EventDispatcher, Runnable, KoinComponent {
     fun queue(name: String, initialDelay: Int = 0, block: () -> Unit) {
         actions[name] = (GameLoop.tick + initialDelay) to block
     }
+
+    fun containsQueue(name: String) = actions.containsKey(name)
 
     override fun run() {
         timers.run()
@@ -67,6 +66,10 @@ object World : Entity, Variable, EventDispatcher, Runnable, KoinComponent {
                 logger.error(e) { "Error in world action!" }
             }
         }
+    }
+
+    fun clearQueue(name: String) {
+        actions.remove(name)
     }
 
     fun clear() {

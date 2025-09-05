@@ -3,11 +3,8 @@ package world.gregs.voidps.engine.queue
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import world.gregs.voidps.engine.client.variable.start
 import world.gregs.voidps.engine.entity.character.player.Player
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -90,13 +87,13 @@ internal class ActionQueueTest {
     fun `Strong actions wait for delays`() {
         val action = action(ActionPriority.Strong, delay = 1)
         queue.add(action)
-        player.start("delay", 10)
+        player["delay"] = 10
         tick()
         assertFalse(action.removed)
     }
 
     @Test
-    fun `Queues can be suspended and resume`() {
+    fun `Queues can be suspended and resumed`() {
         var resumed = false
         val action = action {
             pause(4)
@@ -127,7 +124,5 @@ internal class ActionQueueTest {
         queue.tick()
     }
 
-    private fun action(priority: ActionPriority = ActionPriority.Normal, delay: Int = 0, behaviour: LogoutBehaviour = LogoutBehaviour.Discard, action: suspend Action.() -> Unit = {}): Action {
-        return Action(player, "action", priority, delay, behaviour, null, action)
-    }
+    private fun action(priority: ActionPriority = ActionPriority.Normal, delay: Int = 0, behaviour: LogoutBehaviour = LogoutBehaviour.Discard, action: suspend Action<Player>.() -> Unit = {}): Action<Player> = Action(player, "action", priority, delay, behaviour, null, action as suspend Action<*>.() -> Unit)
 }

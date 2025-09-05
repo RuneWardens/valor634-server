@@ -5,7 +5,7 @@ import world.gregs.voidps.cache.Index
 import java.util.*
 
 fun prefetchKeys(cache: Cache, properties: Properties): IntArray {
-    val existing = properties["prefetchKeys"] as? String
+    val existing = properties["prefetch.keys"] as? String
     return existing?.split(",")?.map { it.toInt() }?.toIntArray() ?: generatePrefetchKeys(cache)
 }
 
@@ -59,7 +59,7 @@ fun file(cache: Cache, index: Int, name: String): Int {
  */
 fun archive(cache: Cache, index: Int): Int {
     var total = 0
-    for(archive in cache.archives(index)) {
+    for (archive in cache.archives(index)) {
         total += cache.sector(index, archive)?.size ?: 0
     }
     total += cache.sector(255, index)?.size ?: 0

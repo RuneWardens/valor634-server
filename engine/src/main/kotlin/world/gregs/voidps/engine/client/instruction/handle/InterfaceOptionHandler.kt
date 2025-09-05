@@ -4,11 +4,13 @@ import com.github.michaelbull.logging.InlineLogger
 import world.gregs.voidps.engine.client.instruction.InstructionHandler
 import world.gregs.voidps.engine.client.instruction.InterfaceHandler
 import world.gregs.voidps.engine.client.ui.InterfaceOption
+import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.network.client.instruction.InteractInterface
 
 class InterfaceOptionHandler(
-    private val handler: InterfaceHandler
+    private val handler: InterfaceHandler,
+    private val interfaceDefinitions: InterfaceDefinitions,
 ) : InstructionHandler<InteractInterface>() {
 
     private val logger = InlineLogger()
@@ -19,7 +21,7 @@ class InterfaceOptionHandler(
         var (id, component, item, inventory, options) = handler.getInterfaceItem(player, interfaceId, componentId, itemId, itemSlot) ?: return
 
         if (options == null) {
-            options = player.interfaceOptions.get(id, component)
+            options = interfaceDefinitions.getComponent(id, component)?.get("options") ?: emptyArray()
         }
 
         if (option !in options.indices) {
@@ -28,18 +30,16 @@ class InterfaceOptionHandler(
         }
 
         val selectedOption = options.getOrNull(option) ?: ""
-        player.emit(
-            InterfaceOption(
-                character = player,
-                id = id,
-                component = component,
-                optionIndex = option,
-                option = selectedOption,
-                item = item,
-                itemSlot = itemSlot,
-                inventory = inventory
-            )
+        val event = InterfaceOption(
+            character = player,
+            id = id,
+            component = component,
+            optionIndex = option,
+            option = selectedOption,
+            item = item,
+            itemSlot = itemSlot,
+            inventory = inventory,
         )
+        player.emit(event)
     }
-
 }

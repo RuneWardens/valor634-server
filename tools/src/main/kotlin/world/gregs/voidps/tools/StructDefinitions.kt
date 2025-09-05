@@ -3,13 +3,15 @@ package world.gregs.voidps.tools
 import world.gregs.voidps.cache.Cache
 import world.gregs.voidps.cache.CacheDelegate
 import world.gregs.voidps.cache.config.decoder.StructDecoder
+import world.gregs.voidps.engine.data.Settings
 import java.io.File
 
 object StructDefinitions {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val cache: Cache = CacheDelegate(property("cachePath"))
+        Settings.load()
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
         val decoder = StructDecoder().load(cache)
         val set = mutableSetOf<Long>()
         for (i in decoder.indices) {
@@ -34,9 +36,9 @@ object StructDefinitions {
         for (param in set.sorted()) {
             val files = map[param.toInt()]
             if (files != null) {
-                println("    const val PARAM_${param} = ${param}L // ${files.joinToString(", ") { "${it}.cs2" }}")
+                println("    const val PARAM_$param = ${param}L // ${files.joinToString(", ") { "$it.cs2" }}")
             } else {
-                println("    const val PARAM_${param} = ${param}L")
+                println("    const val PARAM_$param = ${param}L")
             }
         }
     }

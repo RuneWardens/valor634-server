@@ -16,7 +16,11 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
     val archives: Array<IntArray?> = arrayOfNulls(indexCount)
     val fileCounts: Array<IntArray?> = arrayOfNulls(indexCount)
     val files: Array<Array<IntArray?>?> = arrayOfNulls(indexCount)
-    private val hashes: MutableMap<Int, Int> = Int2IntOpenHashMap(16384)
+    private val hashes = Int2IntOpenHashMap(16384)
+
+    init {
+        hashes.defaultReturnValue(-1)
+    }
 
     override lateinit var versionTable: ByteArray
 
@@ -29,7 +33,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         indexId: Int,
         archiveId: Int,
         xteas: Map<Int, IntArray>?,
-        sectors: Array<Array<ByteArray?>?>? = null
+        sectors: Array<Array<ByteArray?>?>? = null,
     ): Array<ByteArray?>? {
         val fileCounts = fileCounts[indexId] ?: return null
         val fileIds = files[indexId] ?: return null
@@ -90,7 +94,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         indexId: Int,
         versionTable: VersionTableBuilder?,
         whirlpool: Whirlpool,
-        sectors: Array<ByteArray?>? = null
+        sectors: Array<ByteArray?>? = null,
     ): Int {
         val archiveSector = readSector(main, length, index255, 255, indexId)
         if (sectors != null) {
@@ -166,7 +170,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
 
     override fun lastArchiveId(indexId: Int) = archives.getOrNull(indexId)?.lastOrNull() ?: -1
 
-    override fun archiveId(index: Int, hash: Int) = hashes[hash] ?: -1
+    override fun archiveId(index: Int, hash: Int) = hashes[hash]
 
     override fun files(index: Int, archive: Int) = files.getOrNull(index)?.getOrNull(archive) ?: IntArray(0)
 
@@ -174,17 +178,11 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
 
     override fun lastFileId(indexId: Int, archive: Int) = files.getOrNull(indexId)?.getOrNull(archive)?.lastOrNull() ?: -1
 
-    override fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray?) {
-        throw UnsupportedOperationException("Read only cache.")
-    }
+    override fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray?): Unit = throw UnsupportedOperationException("Read only cache.")
 
-    override fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray?) {
-        throw UnsupportedOperationException("Read only cache.")
-    }
+    override fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray?): Unit = throw UnsupportedOperationException("Read only cache.")
 
-    override fun update(): Boolean {
-        return false
-    }
+    override fun update(): Boolean = false
 
     override fun close() {
     }
@@ -254,5 +252,4 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
             return output
         }
     }
-
 }

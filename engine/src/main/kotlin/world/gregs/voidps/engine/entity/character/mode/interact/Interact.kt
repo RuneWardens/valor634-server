@@ -11,7 +11,6 @@ import world.gregs.voidps.engine.entity.character.mode.move.target.TargetStrateg
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.chat.cantReach
 import world.gregs.voidps.engine.entity.character.player.chat.noInterest
-import world.gregs.voidps.engine.entity.character.watch
 import world.gregs.voidps.engine.event.Events
 import world.gregs.voidps.engine.suspend.resumeSuspension
 
@@ -28,18 +27,18 @@ import world.gregs.voidps.engine.suspend.resumeSuspension
 class Interact(
     character: Character,
     val target: Entity,
-    interaction: Interaction,
+    interaction: Interaction<*>,
     strategy: TargetStrategy = TargetStrategy(target),
     private var approachRange: Int? = null,
     private val faceTarget: Boolean = true,
-    shape: Int? = null
+    shape: Int? = null,
 ) : Movement(character, strategy, shape) {
 
-    private var approach: Interaction = interaction.copy(true)
-    private var operate: Interaction = interaction.copy(false)
+    private var approach: Interaction<*> = interaction.copy(true)
+    private var operate: Interaction<*> = interaction.copy(false)
     private var clearInteracted = false
 
-    fun updateInteraction(interaction: Interaction) {
+    fun updateInteraction(interaction: Interaction<*>) {
         approach = interaction.copy(true)
         operate = interaction.copy(false)
         clearInteracted = true
@@ -73,7 +72,7 @@ class Interact(
         if (!validTarget()) {
             return
         }
-        if (character.hasClock("delay") || character.hasMenuOpen()) {
+        if (character.contains("delay") || character.hasMenuOpen()) {
             super.tick()
             return
         }
@@ -84,7 +83,7 @@ class Interact(
             clear()
             return
         }
-        if (character.hasClock("movement_delay") || character.visuals.moved || arrived(approachRange ?: -1) || character.suspension != null) {
+        if (character.hasClock("movement_delay") || character.visuals.moved || arrived(approachRange ?: -1) || character.suspension != null || character.delay != null) {
             return
         }
         character.cantReach()
@@ -120,7 +119,8 @@ class Interact(
             super.tick()
         }
         if (!interacted || updateRange) {
-            interacted = interacted or interact(afterMovement = true)
+            val interact = interact(afterMovement = true)
+            interacted = interacted or interact
             if (clearInteracted) {
                 interacted = false
                 clearInteracted = false
@@ -151,9 +151,8 @@ class Interact(
     /**
      * Continue any suspended, clear any finished or start a new interaction
      */
-    private fun launch(event: Interaction): Boolean {
-        if (character.suspension != null) {
-            character.resumeSuspension()
+    private fun launch(event: Interaction<*>): Boolean {
+        if (character.resumeSuspension()) {
             return true
         }
         if (!event.launched && character.emit(event)) {
@@ -163,7 +162,7 @@ class Interact(
         return false
     }
 
-    private fun interactionFinished() = character.suspension == null && !character.hasClock("delay")
+    private fun interactionFinished() = character.suspension == null && !character.contains("delay")
 
     private fun clear() {
         if (character.suspension != null) {
@@ -179,4 +178,3 @@ class Interact(
     override fun onCompletion() {
     }
 }
-

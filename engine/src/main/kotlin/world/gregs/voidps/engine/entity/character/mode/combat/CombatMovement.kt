@@ -11,12 +11,9 @@ import world.gregs.voidps.engine.entity.character.mode.interact.Interact
 import world.gregs.voidps.engine.entity.character.mode.move.Movement
 import world.gregs.voidps.engine.entity.character.mode.move.target.CharacterTargetStrategy
 import world.gregs.voidps.engine.entity.character.mode.move.target.TargetStrategy
-import world.gregs.voidps.engine.entity.character.move.walkTo
 import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.chat.cantReach
-import world.gregs.voidps.engine.entity.character.size
-import world.gregs.voidps.engine.entity.character.watch
 import world.gregs.voidps.engine.entity.item.Item
 import world.gregs.voidps.engine.map.Overlap
 import world.gregs.voidps.type.Direction
@@ -31,7 +28,11 @@ class CombatMovement(
     strategy: TargetStrategy = CharacterTargetStrategy(target),
 ) : Movement(character, strategy) {
 
+    private val wanderRadius = (character as? NPC)?.def?.getOrNull("wander_radius") ?: 5
+    private val spawn: Tile? = character["respawn_tile"]
+
     override fun start() {
+        character.face(target)
         character.watch(target)
         character.clear("face_entity")
     }
@@ -65,6 +66,8 @@ class CombatMovement(
             if (character.mode == this) {
                 character.mode = EmptyMode
             }
+        } else if (character is NPC && retreat(character)) {
+            return
         }
     }
 
@@ -88,8 +91,7 @@ class CombatMovement(
     }
 
     private fun retreat(character: NPC): Boolean {
-        val wanderRadius = character.def["wander_radius", 5]
-        val spawn: Tile = character["respawn_tile"] ?: return false
+        val spawn = spawn ?: return false
         if (!character.tile.within(spawn, wanderRadius)) {
             character.walkTo(spawn)
             character.stop("in_combat")

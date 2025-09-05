@@ -1,0 +1,297 @@
+[king_black_dragon]
+id = 50
+hitpoints = 2400
+att = 240
+str = 240
+def = 240
+mage = 240
+style = "stab"
+attack_range = 8
+attack_radius = 8
+max_hit_melee = 250
+max_hit_dragonfire = 650
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 258.0
+combat_anims = "king_black_dragon"
+categories = ["dragons", "boss"]
+aka = ["kbd"]
+respawn_delay = 16
+examine = "One of the biggest, meanest dragons around."
+
+[bronze_dragon]
+id = 1590
+hitpoints = 1520
+att = 112
+str = 112
+def = 112
+mage = 100
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 4
+max_hit_melee = 120
+max_hit_dragonfire = 500
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 125.0
+combat_anims = "dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Its scales seem to be made of bronze."
+
+[black_dragon]
+id = 54
+hitpoints = 1900
+att = 200
+str = 200
+def = 200
+mage = 100
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 4
+max_hit_melee = 210
+max_hit_dragonfire = 500
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 199.5
+combat_anims = "colour_dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "A fierce dragon with black scales!"
+
+[black_dragon_dragon_1]
+id = 4673
+clone = "black_dragon"
+
+[blue_dragon]
+id = 55
+hitpoints = 1050
+att = 95
+str = 95
+def = 95
+mage = 95
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 4
+max_hit_melee = 110
+max_hit_dragonfire = 500
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 107.6
+combat_anims = "colour_dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "A mother dragon."
+
+[blue_dragon_dragon_1]
+id = 4681
+clone = "blue_dragon"
+
+[blue_dragon_dragon_2]
+id = 4682
+clone = "blue_dragon"
+
+[blue_dragon_dragon_3]
+id = 4683
+clone = "blue_dragon"
+
+[blue_dragon_dragon_4]
+id = 4684
+clone = "blue_dragon"
+
+[green_dragon]
+id = 941
+hitpoints = 750
+att = 68
+str = 68
+def = 68
+mage = 68
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 4
+max_hit_melee = 120
+max_hit_dragonfire = 500
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 75.0
+combat_anims = "colour_dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Must be related to Elvarg."
+
+[green_dragon_1]
+id = 4677
+clone = "green_dragon"
+
+[green_dragon_2]
+id = 4678
+clone = "green_dragon"
+
+[green_dragon_3]
+id = 4679
+clone = "green_dragon"
+
+[green_dragon_4]
+id = 4680
+clone = "green_dragon"
+
+[iron_dragon]
+id = 1591
+hitpoints = 1890
+att = 165
+str = 165
+def = 165
+mage = 100
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 2
+max_hit_melee = 170
+max_hit_dragonfire = 500
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 173.2
+combat_anims = "dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Its scales seem to be made of iron."
+
+[steel_dragon]
+id = 1592
+hitpoints = 2100
+att = 215
+str = 215
+def = 215
+mage = 100
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 2
+max_hit_melee = 250
+max_hit_dragonfire = 650
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 220.5
+combat_anims = "dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Its scales seem to be made of steel."
+
+[red_dragon]
+id = 53
+hitpoints = 1520
+att = 130
+str = 130
+def = 130
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 3
+max_hit_melee = 140
+max_hit_dragonfire = 500
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 143.4
+drop_table = "red_dragon"
+combat_anims = "colour_dragon"
+combat_sounds = "dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Its scales seem to be made of iron."
+
+[red_dragon_1]
+id = 4670
+clone = "red_dragon"
+
+[red_dragon_2]
+id = 4672
+clone = "red_dragon"
+
+[baby_red_dragon]
+id = 1589
+hitpoints = 480
+att = 40
+str = 40
+def = 40
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 3
+max_hit_melee = 50
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 50.0
+drop_table = "baby_dragon"
+combat_anims = "baby_dragon"
+combat_sounds = "baby_dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Young but still dangerous."
+
+[baby_red_dragon_1]
+id = 4667
+clone = "baby_red_dragon"
+
+[baby_red_dragon_2]
+id = 4668
+clone = "baby_red_dragon"
+
+[baby_black_dragon]
+id = 3376
+hitpoints = 800
+att = 70
+str = 70
+def = 70
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 3
+max_hit_melee = 81
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 80.0
+drop_table = "baby_dragon"
+combat_anims = "baby_dragon"
+combat_sounds = "baby_dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Young but still dangerous."
+
+[baby_blue_dragon]
+id = 52
+hitpoints = 510
+att = 40
+str = 40
+def = 40
+style = "slash"
+attack_range = 8
+attack_radius = 8
+wander_radius = 3
+max_hit_melee = 61
+hunt_mode = "aggressive"
+allowed_under = true
+slayer_xp = 50.0
+drop_table = "baby_dragon"
+combat_anims = "baby_dragon"
+combat_sounds = "baby_dragon"
+categories = ["dragons"]
+respawn_delay = 30
+examine = "Young but still dangerous."
+
+[baby_blue_dragon_1]
+id = 4665
+clone = "baby_blue_dragon"
+
+[baby_blue_dragon_2]
+id = 4666
+clone = "baby_blue_dragon"

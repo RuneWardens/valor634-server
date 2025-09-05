@@ -1,40 +1,83 @@
 package world.gregs.voidps.engine.data.definition
 
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import world.gregs.config.Config
 import world.gregs.voidps.engine.data.config.HuntModeDefinition
-import world.gregs.voidps.engine.get
-import world.gregs.voidps.engine.getProperty
 import world.gregs.voidps.engine.timedLoad
-import world.gregs.yaml.Yaml
-import world.gregs.yaml.read.YamlReaderConfiguration
 
 class HuntModeDefinitions {
 
     private lateinit var modes: Map<String, HuntModeDefinition>
 
-    fun get(name: String): HuntModeDefinition {
-        return modes.getValue(name)
-    }
+    fun get(name: String): HuntModeDefinition = modes.getValue(name)
 
-    @Suppress("UNCHECKED_CAST")
-    fun load(yaml: Yaml = get(), path: String = getProperty("huntPath")): HuntModeDefinitions {
+    fun load(path: String): HuntModeDefinitions {
         timedLoad("hunt mode") {
-            val config = object : YamlReaderConfiguration(2, 2) {
-                override fun set(map: MutableMap<String, Any>, key: String, value: Any, indent: Int, parentMap: String?) {
-                    if (key == "<<") {
-                        map.putAll(value as Map<String, Any>)
-                        return
+            val modes = Object2ObjectOpenHashMap<String, HuntModeDefinition>(10, Hash.VERY_FAST_LOAD_FACTOR)
+            Config.fileReader(path) {
+                while (nextSection()) {
+                    val mode = section()
+                    var type = ""
+                    var checkVisual = "none"
+                    var checkNotTooStrong: Boolean? = null
+                    var checkNotCombat = true
+                    var checkNotCombatSelf = true
+                    var checkNotBusy = true
+                    var checkAfk = false
+                    var findKeepHunting = false
+                    var pauseIfNobodyNear = true
+                    var rate: Int? = null
+                    var id = ""
+                    var layer: Int = -1
+                    var maxMultiAttackers = 2
+                    var checkSameGod = false
+                    var checkZamorak = false
+                    var checkNotZamorak = false
+                    while (nextPair()) {
+                        when (val key = key()) {
+                            "type" -> type = string()
+                            "check_visual" -> checkVisual = string()
+                            "check_not_too_strong" -> checkNotTooStrong = boolean()
+                            "check_not_combat" -> checkNotCombat = boolean()
+                            "check_not_combat_self" -> checkNotCombatSelf = boolean()
+                            "check_not_busy" -> checkNotBusy = boolean()
+                            "check_afk" -> checkAfk = boolean()
+                            "find_keep_hunting" -> findKeepHunting = boolean()
+                            "pause_if_nobody_near" -> pauseIfNobodyNear = boolean()
+                            "rate" -> rate = int()
+                            "id" -> id = string()
+                            "layer" -> layer = int()
+                            "max_multi_attackers" -> maxMultiAttackers = int()
+                            "check_same_god" -> checkSameGod = boolean()
+                            "check_zamorak" -> checkZamorak = boolean()
+                            "check_not_zamorak" -> checkNotZamorak = boolean()
+                            else -> throw IllegalArgumentException("Unknown hunt mode key: $key")
+                        }
                     }
-                    if (indent == 0) {
-                        super.set(map, key, HuntModeDefinition.fromMap(value as Map<String, Any>), indent, parentMap)
-                    } else {
-                        super.set(map, key, value, indent, parentMap)
-                    }
+                    modes[mode] = HuntModeDefinition(
+                        type = type,
+                        checkVisual = checkVisual,
+                        checkNotTooStrong = checkNotTooStrong ?: (type == "player"),
+                        checkNotCombat = checkNotCombat,
+                        checkNotCombatSelf = checkNotCombatSelf,
+                        checkNotBusy = checkNotBusy,
+                        checkAfk = checkAfk,
+                        findKeepHunting = findKeepHunting,
+                        pauseIfNobodyNear = pauseIfNobodyNear,
+                        rate = rate ?: if (type == "player") 1 else 3,
+                        id = id,
+                        layer = layer,
+                        maxMultiAttackers = maxMultiAttackers,
+                        checkSameGod = checkSameGod,
+                        checkZamorak = checkZamorak,
+                        checkNotZamorak = checkNotZamorak,
+                    )
                 }
             }
-            this.modes = yaml.load(path, config)
+            this.modes = modes
             modes.size
         }
         return this
     }
-
 }

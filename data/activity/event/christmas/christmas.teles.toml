@@ -1,0 +1,52 @@
+# 6726 christmas
+[27243]
+option = "Climb-down"
+tile = { x = 1636, y = 4835 }
+to = { x = 1703, y = 4826 }
+
+[10708]
+option = "Climb-down"
+tile = { x = 1698, y = 4515, level = 1 }
+delta = { x = -2, level = -1 }
+
+[10707]
+option = "Climb-up"
+tile = { x = 1698, y = 4515 }
+delta = { x = 2, level = 1 }
+
+[10708]
+option = "Climb-down"
+tile = { x = 1695, y = 4515, level = 1 }
+delta = { x = 2, level = -1 }
+
+[10707]
+option = "Climb-up"
+tile = { x = 1695, y = 4515 }
+delta = { x = -2, level = 1 }
+
+# 8005 christmas
+
+[10708]
+option = "Climb-down"
+tile = { x = 2009, y = 4431, level = 1 }
+delta = { x = -2, level = -1 }
+
+[10707]
+option = "Climb-up"
+tile = { x = 2009, y = 4431 }
+delta = { x = 2, level = 1 }
+
+[10708]
+option = "Climb-down"
+tile = { x = 2006, y = 4431, level = 1 }
+delta = { x = 2, level = -1 }
+
+[10707]
+option = "Climb-up"
+tile = { x = 2006, y = 4431 }
+delta = { x = -2, level = 1 }
+
+[10699]
+option = "Climb-up"
+tile = { x = 2004, y = 4426, level = 1 }
+to = { x = 3091, y = 3275 }

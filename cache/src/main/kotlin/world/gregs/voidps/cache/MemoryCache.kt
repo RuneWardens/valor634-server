@@ -27,21 +27,40 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
 
     override fun sector(index: Int, archive: Int): ByteArray? {
         if (index == 255) {
-            return index255.getOrNull(archive)
+            if (archive >= index255.size) {
+                return null
+            }
+            return index255[archive]
         }
-        return sectors.getOrNull(index)?.getOrNull(archive)
+        if (index >= sectors.size) {
+            return null
+        }
+        val archives = sectors[index]
+        if (archives == null || archive >= archives.size) {
+            return null
+        }
+        return archives[archive]
     }
 
     override fun data(index: Int, archive: Int, file: Int, xtea: IntArray?): ByteArray? {
-        return data.getOrNull(index)?.getOrNull(archive)?.getOrNull(file)
+        if (index >= data.size) {
+            return null
+        }
+        val archives = data[index]
+        if (archives == null || archive >= archives.size || archive < 0) {
+            return null
+        }
+        val files = archives[archive]
+        if (files == null || file >= files.size || file < 0) {
+            return null
+        }
+        return files[file]
     }
 
     companion object : CacheLoader {
         private val logger = InlineLogger()
 
-        operator fun invoke(path: String, threadUsage: Double = 1.0, exponent: BigInteger? = null, modulus: BigInteger? = null, xteas: Map<Int, IntArray>? = null): Cache {
-            return load(path, exponent, modulus, xteas, threadUsage) as ReadOnlyCache
-        }
+        operator fun invoke(path: String, threadUsage: Double = 1.0, exponent: BigInteger? = null, modulus: BigInteger? = null, xteas: Map<Int, IntArray>? = null): Cache = load(path, exponent, modulus, xteas, threadUsage) as ReadOnlyCache
 
         /**
          * Load each index in parallel using a percentage of cpu cores
@@ -56,7 +75,7 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
             indexCount: Int,
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
-            threadUsage: Double
+            threadUsage: Double,
         ): Cache {
             val cache = MemoryCache(indexCount)
             val processors = (Runtime.getRuntime().availableProcessors() * threadUsage).toInt().coerceAtLeast(1)
@@ -88,7 +107,7 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
             xteas: Map<Int, IntArray>?,
             processors: Int,
             cache: MemoryCache,
-            versionTable: VersionTableBuilder?
+            versionTable: VersionTableBuilder?,
         ) {
             val file = File(path, "${FileCache.CACHE_FILE_NAME}.idx$indexId")
             if (!file.exists()) {
@@ -139,14 +158,21 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
             mainFile: File,
             mainFileLength: Long,
             indexId: Int,
-            xteas: Map<Int, IntArray>?
+            xteas: Map<Int, IntArray>?,
         ) {
             val context = DecompressionContext()
             val raf = RandomAccessFile(file, "r")
             val main = RandomAccessFile(mainFile, "r")
             for (archiveId in archives) {
                 val archiveFiles = cache.fileData(
-                    context, main, mainFileLength, raf, indexId, archiveId, xteas, cache.sectors
+                    context,
+                    main,
+                    mainFileLength,
+                    raf,
+                    indexId,
+                    archiveId,
+                    xteas,
+                    cache.sectors,
                 ) ?: continue
                 val archiveFileIds = cache.files[indexId]?.get(archiveId) ?: continue
                 val fileId = archiveFileIds.last()

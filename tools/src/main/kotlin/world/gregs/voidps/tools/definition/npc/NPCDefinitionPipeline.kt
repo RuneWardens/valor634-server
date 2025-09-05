@@ -4,6 +4,7 @@ import world.gregs.voidps.cache.Cache
 import world.gregs.voidps.cache.CacheDelegate
 import world.gregs.voidps.cache.definition.data.NPCDefinition
 import world.gregs.voidps.cache.definition.decoder.NPCDecoder
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.tools.Pipeline
 import world.gregs.voidps.tools.definition.item.Extras
 import world.gregs.voidps.tools.definition.item.ItemDefinitionPipeline.collectUnknownPages
@@ -15,7 +16,6 @@ import world.gregs.voidps.tools.definition.item.pipe.page.UniqueIdentifiers
 import world.gregs.voidps.tools.definition.npc.pipe.wiki.InfoBoxNPC
 import world.gregs.voidps.tools.definition.npc.pipe.wiki.NPCDefaults
 import world.gregs.voidps.tools.definition.npc.pipe.wiki.NPCManualChanges
-import world.gregs.voidps.tools.property
 import world.gregs.voidps.tools.wiki.model.Wiki
 import world.gregs.yaml.Yaml
 import world.gregs.yaml.write.YamlWriterConfiguration
@@ -29,16 +29,17 @@ object NPCDefinitionPipeline {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        Settings.load()
         val rs2Wiki = Wiki.load("${System.getProperty("user.home")}\\Downloads\\runescape_pages_full\\runescapewiki-latest-pages-articles-2011-01-31.xml")
         val start = System.currentTimeMillis()
-        val cache: Cache = CacheDelegate(property("cachePath"))
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
         val decoder = NPCDecoder(true).load(cache)
         val pages = getPages(decoder, rs2Wiki)
         val output = buildNPCExtras(decoder, pages)
         val map = convertToYaml(output)
         val yaml = Yaml()
         val config = YamlWriterConfiguration(forceQuoteStrings = true)
-        val file = File("npcs.yml")
+        val file = File("npcs.toml")
         yaml.save(file.path, map, config)
         val contents = "# Don't edit; apply changes to the NPCDefinitionPipeline tool's NPCManualChanges class instead.\n${file.readText()}"
         file.writeText(contents)
@@ -50,35 +51,41 @@ object NPCDefinitionPipeline {
      */
     private fun getPages(decoder: Array<NPCDefinition>, rs2Wiki: Wiki): MutableMap<Int, PageCollector> {
         val pipeline = Pipeline<PageCollector>().apply {
-            add(LivePageCollector(
-                "osrs-npc",
-                listOf("Monsters", "Non-player_characters"),
-                listOf(
-                    "infobox monster" to "id",
-                    "infobox npc" to "id"
-                ),
-                "oldschool.runescape.wiki",
-                false// OSRS ids are scrambled :(
-            ) { content, page, _ ->
-                content.osrs = page
-            })
-            add(LivePageCollector(
-                "rs3-npc",
-                listOf("Bestiary", "Non-player_characters"),
-                listOf(
-                    "infobox monster" to "id",
-                    "infobox npc" to "id",
-                    "infobox non-player character" to "id"
-                ),
-                "runescape.wiki",
-                true
-            ) { content, page, idd ->
-                content.rs3 = page
-                content.rs3Idd = idd
-            })
-            add(OfflinePageCollector(rs2Wiki, listOf("infobox monster", "infobox npc")) { content, page ->
-                content.rs2 = page
-            })
+            add(
+                LivePageCollector(
+                    "osrs-npc",
+                    listOf("Monsters", "Non-player_characters"),
+                    listOf(
+                        "infobox monster" to "id",
+                        "infobox npc" to "id",
+                    ),
+                    "oldschool.runescape.wiki",
+                    false, // OSRS ids are scrambled :(
+                ) { content, page, _ ->
+                    content.osrs = page
+                },
+            )
+            add(
+                LivePageCollector(
+                    "rs3-npc",
+                    listOf("Bestiary", "Non-player_characters"),
+                    listOf(
+                        "infobox monster" to "id",
+                        "infobox npc" to "id",
+                        "infobox non-player character" to "id",
+                    ),
+                    "runescape.wiki",
+                    true,
+                ) { content, page, idd ->
+                    content.rs3 = page
+                    content.rs3Idd = idd
+                },
+            )
+            add(
+                OfflinePageCollector(rs2Wiki, listOf("infobox monster", "infobox npc")) { content, page ->
+                    content.rs2 = page
+                },
+            )
         }
 
         val pages = mutableMapOf<Int, PageCollector>()
@@ -115,7 +122,7 @@ object NPCDefinitionPipeline {
 
     private fun buildNPCExtras(
         decoder: Array<NPCDefinition>,
-        pages: MutableMap<Int, PageCollector>
+        pages: MutableMap<Int, PageCollector>,
     ): MutableMap<Int, Extras> {
         val output = mutableMapOf<Int, Extras>()
         val infoboxes = listOf("infobox monster", "infobox npc", "infobox non-player character")

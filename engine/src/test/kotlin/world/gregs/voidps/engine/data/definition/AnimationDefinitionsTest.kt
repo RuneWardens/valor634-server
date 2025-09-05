@@ -2,7 +2,6 @@ package world.gregs.voidps.engine.data.definition
 
 import world.gregs.voidps.cache.definition.data.AnimationDefinition
 import world.gregs.voidps.cache.definition.decoder.AnimationDecoder
-import world.gregs.yaml.Yaml
 
 internal class AnimationDefinitionsTest : DefinitionsDecoderTest<AnimationDefinition, AnimationDecoder, AnimationDefinitions>() {
 
@@ -11,20 +10,14 @@ internal class AnimationDefinitionsTest : DefinitionsDecoderTest<AnimationDefini
     override val id: String = "expression_yes"
     override val intId: Int = 9741
 
-    override fun expected(): AnimationDefinition {
-        return AnimationDefinition(intId, stringId = id)
-    }
+    override fun expected(): AnimationDefinition = AnimationDefinition(intId, stringId = id)
 
-    override fun empty(): AnimationDefinition {
-        return AnimationDefinition(-1)
-    }
+    override fun empty(): AnimationDefinition = AnimationDefinition(-1)
 
-    override fun definitions(): AnimationDefinitions {
-        return AnimationDefinitions(definitions)
-    }
+    override fun definitions(): AnimationDefinitions = AnimationDefinitions(definitions)
 
     override fun load(definitions: AnimationDefinitions) {
-        definitions.load(Yaml(), "../data/definitions/animations.yml")
+        val uri = AnimationDefinitionsTest::class.java.getResource("test-animation.toml")!!
+        definitions.load(listOf(uri.path))
     }
-
 }

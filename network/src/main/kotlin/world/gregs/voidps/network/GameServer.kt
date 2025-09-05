@@ -20,7 +20,7 @@ import kotlin.concurrent.thread
  */
 class GameServer(
     private val fileServer: Server,
-    private val connections: ConnectionTracker
+    private val connections: ConnectionTracker,
 ) {
     private var job: Job? = null
     private var dispatcher: ExecutorCoroutineDispatcher? = null
@@ -44,7 +44,7 @@ class GameServer(
         job = scope.launch {
             try {
                 supervisorScope {
-                    logger.info { "Listening for requests on port ${port}..." }
+                    logger.info { "Listening for requests on port $port..." }
                     while (isActive) {
                         val socket = server.accept()
                         launch(dispatcher + exceptionHandler) {
@@ -83,7 +83,11 @@ class GameServer(
     }
 
     fun stop() {
+        if (job == null) {
+            return
+        }
         job?.cancel()
+        job = null
         dispatcher?.close()
         server?.close()
         connections.clear()
@@ -93,7 +97,7 @@ class GameServer(
 
         @ExperimentalUnsignedTypes
         fun load(cache: Cache, properties: Properties): GameServer {
-            val limit = properties.getProperty("loginLimit").toInt()
+            val limit = properties.getProperty("network.maxClientPerIP").toInt()
             val fileServer = FileServer.load(cache, properties)
             return GameServer(fileServer, ConnectionTracker(limit))
         }

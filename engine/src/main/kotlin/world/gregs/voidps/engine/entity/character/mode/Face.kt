@@ -1,8 +1,6 @@
 package world.gregs.voidps.engine.entity.character.mode
 
 import world.gregs.voidps.engine.entity.character.Character
-import world.gregs.voidps.engine.entity.character.clearWatch
-import world.gregs.voidps.engine.entity.character.watch
 import world.gregs.voidps.engine.entity.distanceTo
 
 /**
@@ -11,7 +9,7 @@ import world.gregs.voidps.engine.entity.distanceTo
 class Face(
     val character: Character,
     val target: Character,
-    val distance: Int = 1
+    val distance: Int = 1,
 ) : Mode {
 
     override fun start() {

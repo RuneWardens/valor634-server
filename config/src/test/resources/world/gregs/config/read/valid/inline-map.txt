@@ -1,0 +1,5 @@
+[] name["first"] = "Tom"
+[] name["last"] = "Preston-Werner"
+[] point["x"] = 1
+[] point["y"] = 2
+[] animal["type.name"] = "pug"

@@ -1,0 +1,8 @@
+[castle_wars_draw]
+id = 80
+
+[castle_wars_loss]
+id = 81
+
+[castle_wars_win]
+id = 82

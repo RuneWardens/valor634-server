@@ -1,0 +1,23 @@
+[zombie_monkey_attack]
+id = 629
+
+[monkey_attack]
+id = 630
+
+[monkey_caught]
+id = 631
+
+[monkey_death]
+id = 632
+
+[monkey_escape]
+id = 633
+
+[monkey_defend]
+id = 634
+
+[zombie_monkey_death]
+id = 635
+
+[zombie_monkey_defend]
+id = 636

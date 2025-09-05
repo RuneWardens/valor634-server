@@ -1,0 +1,31 @@
+[rat_tertiary]
+roll = 4
+drops = [
+    { id = "rat_bone", chance = 1, variable = "rag_and_bone_man_wish_list", equals = "started", default = "unstarted" }
+]
+
+[rat_drop_table]
+type = "all"
+drops = [
+    { table = "rat_tertiary" }
+]
+
+[stronghold_rat_drop_table]
+type = "all"
+drops = [
+    { table = "bones" },
+]
+
+[giant_rat_primary]
+type = "all"
+drops = [
+    { id = "bones" },
+    { id = "raw_rat_meat" }
+]
+
+[giant_rat_drop_table]
+type = "all"
+drops = [
+    { table = "giant_rat_primary" },
+    { table = "easy_clue_scroll", roll = 128 }
+]

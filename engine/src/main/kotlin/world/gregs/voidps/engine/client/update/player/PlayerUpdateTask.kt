@@ -3,8 +3,8 @@ package world.gregs.voidps.engine.client.update.player
 import world.gregs.voidps.buffer.write.Writer
 import world.gregs.voidps.engine.client.update.view.PlayerTrackingSet
 import world.gregs.voidps.engine.client.update.view.Viewport
-import world.gregs.voidps.engine.entity.character.CharacterList
 import world.gregs.voidps.engine.entity.character.player.Player
+import world.gregs.voidps.engine.entity.character.player.Players
 import world.gregs.voidps.network.login.protocol.encode.updatePlayers
 import world.gregs.voidps.network.login.protocol.visual.PlayerVisuals
 import world.gregs.voidps.network.login.protocol.visual.VisualEncoder
@@ -13,8 +13,8 @@ import world.gregs.voidps.type.Delta
 import kotlin.math.abs
 
 class PlayerUpdateTask(
-    private val players: CharacterList<Player>,
-    private val encoders: List<VisualEncoder<PlayerVisuals>>
+    private val players: Players,
+    private val encoders: List<VisualEncoder<PlayerVisuals>>,
 ) {
 
     private val initialEncoders = encoders.filter { it.initial }
@@ -44,7 +44,7 @@ class PlayerUpdateTask(
         updates: Writer,
         set: PlayerTrackingSet,
         viewport: Viewport,
-        active: Boolean
+        active: Boolean,
     ) {
         var skip = -1
         var index: Int
@@ -180,7 +180,7 @@ class PlayerUpdateTask(
         updates: Writer,
         set: PlayerTrackingSet,
         viewport: Viewport,
-        active: Boolean
+        active: Boolean,
     ) {
         var skip = -1
         var index: Int
@@ -233,11 +233,10 @@ class PlayerUpdateTask(
      * Check if a local [player] should be added to the local players list
      * @return true when within [Viewport.radius] and packet has enough room
      */
-    private fun add(player: Player, client: Player, viewport: Viewport, updates: Writer, sync: Writer): Boolean {
-        return player.client?.disconnected != true && player.tile.within(client.tile, viewport.radius) &&
-                updates.position() < MAX_UPDATE_SIZE &&
-                sync.position() < MAX_SYNC_SIZE
-    }
+    private fun add(player: Player, client: Player, viewport: Viewport, updates: Writer, sync: Writer): Boolean = player.client?.disconnected != true &&
+        player.tile.within(client.tile, viewport.radius) &&
+        updates.position() < MAX_UPDATE_SIZE &&
+        sync.position() < MAX_SYNC_SIZE
 
     fun writeSkip(sync: Writer, skip: Int) {
         sync.writeBits(1, 0)

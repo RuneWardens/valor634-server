@@ -4,19 +4,20 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import world.gregs.voidps.cache.Cache
 import world.gregs.voidps.cache.CacheDelegate
+import world.gregs.voidps.cache.definition.data.MapTile
 import world.gregs.voidps.cache.definition.decoder.*
 import world.gregs.voidps.engine.client.update.batch.ZoneBatchUpdates
+import world.gregs.voidps.engine.data.Settings
+import world.gregs.voidps.engine.data.configFiles
 import world.gregs.voidps.engine.data.definition.ObjectDefinitions
 import world.gregs.voidps.engine.entity.obj.GameObject
 import world.gregs.voidps.engine.entity.obj.GameObjects
 import world.gregs.voidps.engine.map.collision.*
 import world.gregs.voidps.tools.cache.Xteas
+import world.gregs.voidps.tools.map.MapDecoder
 import world.gregs.voidps.tools.map.view.graph.MutableNavigationGraph
-import world.gregs.voidps.tools.property
-import world.gregs.voidps.tools.propertyOrNull
 import world.gregs.voidps.type.Region
 import world.gregs.voidps.type.Tile
-import world.gregs.yaml.Yaml
 
 /**
  * Finds links between objects e.g ladders, stairs, entrances, exits
@@ -25,11 +26,12 @@ object WorldMapLinkIdentifier {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val cache: Cache = CacheDelegate(property("cachePath"))
-        val xteas: Xteas = Xteas().load(property("xteaPath"), propertyOrNull("xteaJsonKey") ?: Xteas.DEFAULT_KEY, propertyOrNull("xteaJsonValue") ?: Xteas.DEFAULT_VALUE)
+        Settings.load()
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
+        val xteas: Xteas = Xteas().load(Settings["storage.xteas"], Settings["xteaJsonKey", Xteas.DEFAULT_KEY], Settings["xteaJsonValue", Xteas.DEFAULT_VALUE])
         val worldMapDetailsDecoder = WorldMapDetailsDecoder().load(cache)
         val worldMapIconDecoder = WorldMapIconDecoder().load(cache)
-        val definitions: ObjectDefinitions = ObjectDefinitions(ObjectDecoder(member = true, lowDetail = false).load(cache)).load(Yaml(), property("objectDefinitionsPath"))
+        val definitions: ObjectDefinitions = ObjectDefinitions(ObjectDecoder(member = true, lowDetail = false).load(cache)).load(configFiles().getValue(Settings["definitions.objects"]))
         val mapDecoder = MapDecoder(xteas).load(cache)
         val collisions = Collisions()
         val collisionDecoder = CollisionDecoder(collisions)
@@ -40,14 +42,16 @@ object WorldMapLinkIdentifier {
         val regions = mutableListOf<Region>()
         for (regionX in 0 until 256) {
             for (regionY in 0 until 256) {
-                cache.data(5, "m${regionX}_${regionY}") ?: continue
+                cache.data(5, "m${regionX}_$regionY") ?: continue
                 regions.add(Region(regionX, regionY))
             }
         }
         startKoin {
-            modules(module {
-                single { definitions }
-            })
+            modules(
+                module {
+                    single { definitions }
+                },
+            )
         }
         val start = System.currentTimeMillis()
         val objCollision = GameObjectCollisionAdd(collisions)
@@ -61,7 +65,9 @@ object WorldMapLinkIdentifier {
                 objects.add(obj)
                 objCollision.modify(obj)
             }
-            collisionDecoder.decode(region, def)
+            val x = region.tile.x
+            val y = region.tile.y
+            collisionDecoder.decode(def.tiles.map { MapTile.settings(it).toByte() }.toByteArray(), x, y)
         }
         val cacheLinks = mutableListOf<Pair<Tile, Tile>>()
         val dungeons = WorldMapDungeons(worldMapDetailsDecoder, worldMapIconDecoder, clientScriptDecoder, cache)
@@ -74,5 +80,4 @@ object WorldMapLinkIdentifier {
         MutableNavigationGraph.save(graph, "./navgraph.json")
         println("${regions.size} regions loaded in ${System.currentTimeMillis() - start}ms")
     }
-
 }

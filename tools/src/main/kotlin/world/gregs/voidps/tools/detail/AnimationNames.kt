@@ -6,8 +6,8 @@ import world.gregs.voidps.cache.config.decoder.RenderAnimationDecoder
 import world.gregs.voidps.cache.definition.decoder.AnimationDecoderFull
 import world.gregs.voidps.cache.definition.decoder.ItemDecoderFull
 import world.gregs.voidps.cache.definition.decoder.NPCDecoder
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.data.definition.DefinitionsDecoder.Companion.toIdentifier
-import world.gregs.voidps.tools.property
 import world.gregs.yaml.Yaml
 
 /**
@@ -20,7 +20,8 @@ object AnimationNames {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val cache: Cache = CacheDelegate(property("cachePath"))
+        Settings.load()
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
         val yaml = Yaml()
         val decoder = AnimationDecoderFull().load(cache)
         val itemDecoder = ItemDecoderFull().load(cache)
@@ -69,7 +70,7 @@ object AnimationNames {
 
     private fun MutableMap<Int, String>.add(id: Int, name: String, suffix: String) {
         if (id != -1 && name != "" && name != "null") {
-            set(id, "${name}${suffix}")
+            set(id, "${name}$suffix")
         }
     }
 
@@ -82,5 +83,4 @@ object AnimationNames {
         }
         return map
     }
-
 }

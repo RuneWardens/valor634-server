@@ -3,24 +3,23 @@ package world.gregs.voidps.engine.entity.character.mode.move
 import org.rsmod.game.pathfinder.LineValidator
 import org.rsmod.game.pathfinder.PathFinder
 import org.rsmod.game.pathfinder.StepValidator
+import world.gregs.voidps.engine.GameLoop
+import world.gregs.voidps.engine.client.ui.menu
 import world.gregs.voidps.engine.client.variable.hasClock
-import world.gregs.voidps.engine.client.variable.start
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.data.definition.AreaDefinitions
 import world.gregs.voidps.engine.entity.character.Character
-import world.gregs.voidps.engine.entity.character.clearAnimation
-import world.gregs.voidps.engine.entity.character.face
 import world.gregs.voidps.engine.entity.character.mode.EmptyMode
 import world.gregs.voidps.engine.entity.character.mode.Mode
 import world.gregs.voidps.engine.entity.character.mode.move.target.TargetStrategy
-import world.gregs.voidps.engine.entity.character.move.previousTile
 import world.gregs.voidps.engine.entity.character.move.running
 import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.movementType
 import world.gregs.voidps.engine.entity.character.player.temporaryMoveType
-import world.gregs.voidps.engine.entity.character.size
 import world.gregs.voidps.engine.get
 import world.gregs.voidps.engine.map.Overlap
+import world.gregs.voidps.engine.map.collision.Collisions
 import world.gregs.voidps.engine.map.region.RegionRetry
 import world.gregs.voidps.network.login.protocol.visual.update.player.MoveType
 import world.gregs.voidps.type.Delta
@@ -32,7 +31,7 @@ import kotlin.math.sign
 open class Movement(
     internal val character: Character,
     private val strategy: TargetStrategy? = null,
-    private val shape: Int? = null
+    private val shape: Int? = null,
 ) : Mode {
 
     private val stepValidator: StepValidator = get()
@@ -61,7 +60,7 @@ open class Movement(
             }
             return
         }
-        if (hasDelay() && !character.steps.destination.noCollision) {
+        if (hasDelay() && !canMove() && !character.steps.destination.noCollision) {
             return
         }
         calculate()
@@ -74,7 +73,17 @@ open class Movement(
         }
     }
 
-    private fun hasDelay() = character.hasClock("movement_delay") || character.hasClock("delay")
+    private fun canMove(): Boolean {
+        if (!hasDelay() && (character as? Player)?.menu == null) {
+            return true
+        }
+        if (character.queue.isEmpty()) {
+            return true
+        }
+        return character.delay != null
+    }
+
+    private fun hasDelay() = character.hasClock("movement_delay") || character.contains("delay")
 
     /**
      * Applies one step
@@ -94,14 +103,13 @@ open class Movement(
             clearSteps()
             return false
         }
-        character.clearAnimation()
         setMovementType(runStep, end = false)
         if (runStep) {
             character.visuals.runStep = clockwise(direction)
         } else {
             character.visuals.walkStep = clockwise(direction)
         }
-        character.previousTile = character.tile
+        character.steps.previous = character.tile
         move(character, direction.delta)
         character.face(direction, false)
         return true
@@ -114,9 +122,15 @@ open class Movement(
 
     private fun setMovementType(run: Boolean, end: Boolean) {
         if (character is Player) {
-            character.start("last_movement", 1)
-            character.movementType = if (run) MoveType.Run else MoveType.Walk
-            character.temporaryMoveType = if (end) MoveType.Run else if (run) MoveType.Run else MoveType.Walk
+            character.steps.last = GameLoop.tick + 1 // faster than character.start("last_movement", 1)
+            character.temporaryMoveType = if (run) MoveType.Run else MoveType.Walk
+            character.movementType = if (end) {
+                MoveType.Run
+            } else if (run) {
+                MoveType.Run
+            } else {
+                MoveType.Walk
+            }
         }
     }
 
@@ -169,9 +183,7 @@ open class Movement(
         return null
     }
 
-    fun canStep(x: Int, y: Int): Boolean {
-        return stepValidator.canTravel(character, x, y)
-    }
+    fun canStep(x: Int, y: Int): Boolean = stepValidator.canTravel(character, x, y)
 
     fun arrived(distance: Int = -1): Boolean {
         strategy ?: return false
@@ -183,6 +195,9 @@ open class Movement(
         }
         if (!character.tile.within(strategy.tile, distance)) {
             return false
+        }
+        if (!strategy.requiresLineOfSight()) {
+            return true
         }
         return lineValidator.hasLineOfSight(character, strategy.tile, strategy.width, strategy.height)
     }
@@ -197,23 +212,42 @@ open class Movement(
         fun move(character: Character, delta: Delta) {
             val from = character.tile
             character.tile = character.tile.add(delta)
+            val to = character.tile
             character.visuals.moved = true
-            if (character is Player) {
+            if (character is Player && character.networked) {
                 character.emit(ReloadRegion)
             }
-            character.emit(Moved(character, from, character.tile))
+            if (Settings["world.players.collision", false] && !character.contains("dead")) {
+                move(character, from, to)
+            }
             if (character is Player) {
-                val definitions = get<AreaDefinitions>()
-                val to = character.tile
-                for (def in definitions.get(from.zone)) {
+                character.emit(Moved(character, from, to))
+                val areaDefinitions: AreaDefinitions = get()
+                for (def in areaDefinitions.get(from.zone)) {
                     if (from in def.area && to !in def.area) {
                         character.emit(AreaExited(character, def.name, def.tags, def.area))
                     }
                 }
-                for (def in definitions.get(to.zone)) {
+                for (def in areaDefinitions.get(to.zone)) {
                     if (to in def.area && from !in def.area) {
                         character.emit(AreaEntered(character, def.name, def.tags, def.area))
                     }
+                }
+            }
+        }
+
+        private fun move(character: Character, from: Tile, to: Tile) {
+            val collisions: Collisions = get()
+            val mask = character.collisionFlag
+            val size = character.size
+            for (x in 0 until size) {
+                for (y in 0 until size) {
+                    collisions.remove(from.x + x, from.y + y, from.level, mask)
+                }
+            }
+            for (x in 0 until size) {
+                for (y in 0 until size) {
+                    collisions.add(to.x + x, to.y + y, to.level, mask)
                 }
             }
         }

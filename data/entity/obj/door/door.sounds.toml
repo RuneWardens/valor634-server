@@ -1,0 +1,17 @@
+[door_close]
+id = 80
+
+[door_open]
+id = 81
+
+[iron_door_close]
+id = 70
+
+[iron_door_open]
+id = 71
+
+[gate_close]
+id = 66
+
+[gate_open]
+id = 67

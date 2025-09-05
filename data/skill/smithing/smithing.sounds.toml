@@ -1,0 +1,8 @@
+[smelt_bar]
+id = 2725
+
+[superheat_all]
+id = 190
+
+[superheat_fail]
+id = 191

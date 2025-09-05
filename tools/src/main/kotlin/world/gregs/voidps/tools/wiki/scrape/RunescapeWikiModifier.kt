@@ -7,7 +7,7 @@ import world.gregs.voidps.cache.Cache
 import world.gregs.voidps.cache.CacheDelegate
 import world.gregs.voidps.cache.definition.data.ItemDefinition
 import world.gregs.voidps.cache.definition.decoder.ItemDecoder
-import world.gregs.voidps.tools.property
+import world.gregs.voidps.engine.data.Settings
 import java.io.File
 import java.time.LocalDate
 import java.time.Month
@@ -21,7 +21,8 @@ internal object RunescapeWikiModifier {
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
     fun main(args: Array<String>) {
-        val cache: Cache = CacheDelegate(property("cachePath"))
+        Settings.load()
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
         val decoder = ItemDecoder().load(cache)
 
         val file = File("./data/dump/ItemsPretty.json")
@@ -99,7 +100,7 @@ internal object RunescapeWikiModifier {
     private fun identifyMissingIds(
         raw: MutableMap<String, MutableMap<String, String>>,
         decoder: Array<ItemDefinition>,
-        output: MutableMap<Int, MutableMap<String, Any>>
+        output: MutableMap<Int, MutableMap<String, Any>>,
     ) {
         for ((item, properties) in raw) {
             val ids = properties.getIds()
@@ -271,7 +272,7 @@ internal object RunescapeWikiModifier {
         "forlorn",
         "stake-thrower",
         "clairvoyance",
-        "overheat"
+        "overheat",
     )
     private val regex = "Used (in|with) (.*)\\([0-9,\\s&]+\\)".toRegex()
     private val regex2 = "Requires (.*)\\([0-9,\\s&]+\\)".toRegex()

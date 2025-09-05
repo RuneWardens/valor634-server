@@ -3,7 +3,7 @@ package world.gregs.voidps.engine.client.instruction.handle
 import com.github.michaelbull.logging.InlineLogger
 import world.gregs.voidps.cache.definition.Transforms
 import world.gregs.voidps.engine.client.instruction.InstructionHandler
-import world.gregs.voidps.engine.client.variable.hasClock
+import world.gregs.voidps.engine.client.ui.closeInterfaces
 import world.gregs.voidps.engine.data.definition.DefinitionsDecoder
 import world.gregs.voidps.engine.data.definition.ObjectDefinitions
 import world.gregs.voidps.engine.data.definition.VariableDefinitions
@@ -18,13 +18,13 @@ import world.gregs.voidps.type.Tile
 
 class ObjectOptionHandler(
     private val objects: GameObjects,
-    private val definitions: ObjectDefinitions
+    private val definitions: ObjectDefinitions,
 ) : InstructionHandler<InteractObject>() {
 
     private val logger = InlineLogger()
 
     override fun validate(player: Player, instruction: InteractObject) {
-        if (player.hasClock("delay") || player.hasClock("input_delay")) {
+        if (player.contains("delay")) {
             return
         }
         val (objectId, x, y, option) = instruction
@@ -37,7 +37,7 @@ class ObjectOptionHandler(
         val definition = getDefinition(player, definitions, target.def, target.def)
         val options = definition.options
         if (options == null) {
-            logger.warn { "Invalid object interaction $target $option" }
+            logger.warn { "Invalid object interaction $target $option ${definition.options.contentToString()}" }
             return
         }
         val index = option - 1
@@ -46,6 +46,7 @@ class ObjectOptionHandler(
             logger.warn { "Invalid object option $target $index" }
             return
         }
+        player.closeInterfaces()
         player.mode = Interact(player, target, ObjectOption(player, target, definition, selectedOption))
     }
 
@@ -86,13 +87,13 @@ class ObjectOptionHandler(
             val varbit = def.varbit
             if (varbit != -1) {
                 val index = getVarbitIndex(player, varbit)
-                return definitions.get(transforms[index])
+                return definitions.get(transforms.getOrNull(index.coerceAtMost(transforms.lastIndex)) ?: return definition)
             }
 
             val varp = def.varp
             if (varp != -1) {
-                val index = this.getVarpIndex(player, varp)
-                return definitions.get(transforms[index])
+                val index = getVarpIndex(player, varp)
+                return definitions.get(transforms.getOrNull(index.coerceAtMost(transforms.lastIndex)) ?: return definition)
             }
             return definition
         }

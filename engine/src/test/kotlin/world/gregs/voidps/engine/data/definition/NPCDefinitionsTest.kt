@@ -1,11 +1,7 @@
 package world.gregs.voidps.engine.data.definition
 
-import io.mockk.every
-import io.mockk.mockk
-import world.gregs.voidps.cache.definition.data.ItemDefinition
 import world.gregs.voidps.cache.definition.data.NPCDefinition
 import world.gregs.voidps.cache.definition.decoder.NPCDecoder
-import world.gregs.yaml.Yaml
 
 internal class NPCDefinitionsTest : DefinitionsDecoderTest<NPCDefinition, NPCDecoder, NPCDefinitions>() {
 
@@ -14,26 +10,22 @@ internal class NPCDefinitionsTest : DefinitionsDecoderTest<NPCDefinition, NPCDec
     override val id: String = "hans"
     override val intId: Int = 0
 
-    override fun expected(): NPCDefinition {
-        return NPCDefinition(intId, stringId = id, extras = mapOf(
-            "race" to "human",
+    override fun expected(): NPCDefinition = NPCDefinition(
+        intId,
+        stringId = id,
+        extras = mapOf(
+            "categories" to setOf("human"),
             "wander_radius" to 4,
-            "examine" to "Servant of the Duke of Lumbridge."
-        ))
-    }
+            "examine" to "Servant of the Duke of Lumbridge.",
+        ),
+    )
 
-    override fun empty(): NPCDefinition {
-        return NPCDefinition(-1)
-    }
+    override fun empty(): NPCDefinition = NPCDefinition(-1)
 
-    override fun definitions(): NPCDefinitions {
-        return NPCDefinitions(definitions)
-    }
+    override fun definitions(): NPCDefinitions = NPCDefinitions(definitions)
 
     override fun load(definitions: NPCDefinitions) {
-        val itemDefinitions: ItemDefinitions = mockk(relaxed = true)
-        every { itemDefinitions.get(any<Int>()) } returns ItemDefinition.EMPTY
-        every { itemDefinitions.get(any<String>()) } returns ItemDefinition.EMPTY
-        definitions.load(Yaml(), "../data/definitions/npcs.yml")
+        val uri = NPCDefinitionsTest::class.java.getResource("test-npc.toml")!!
+        definitions.load(listOf(uri.path))
     }
 }
