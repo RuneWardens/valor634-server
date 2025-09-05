@@ -4,7 +4,6 @@ import world.gregs.voidps.engine.entity.Entity
 import world.gregs.voidps.engine.entity.character.Character
 import world.gregs.voidps.engine.entity.character.mode.move.Movement
 import world.gregs.voidps.engine.entity.character.npc.NPC
-import world.gregs.voidps.engine.entity.character.watch
 import world.gregs.voidps.engine.entity.distanceTo
 import world.gregs.voidps.type.Direction
 import world.gregs.voidps.type.Tile
@@ -14,7 +13,7 @@ class Retreat(
     private val target: Entity,
     private val spawn: Tile = npc["spawn_tile"]!!,
     private val maxRetreatRadius: Int = npc.def["max_retreat_distance", 25],
-    private val maxRadius: Int = npc.def["max_retreat_distance", 25]
+    private val maxRadius: Int = npc.def["max_retreat_distance", 25],
 ) : Movement(npc) {
 
     override fun tick() {

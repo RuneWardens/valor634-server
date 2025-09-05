@@ -2,7 +2,7 @@ package world.gregs.voidps.tools.map.render.draw
 
 import world.gregs.voidps.cache.definition.data.MapDefinition
 import world.gregs.voidps.cache.definition.data.MapTile
-import world.gregs.voidps.cache.definition.data.TextureDefinition
+import world.gregs.voidps.cache.definition.data.MaterialDefinition
 import world.gregs.voidps.tools.map.render.load.MapConstants.SIZE
 import world.gregs.voidps.tools.map.render.load.MapTileSettings
 import world.gregs.voidps.tools.map.render.model.TextureColours
@@ -12,11 +12,11 @@ import world.gregs.voidps.type.Region
 import kotlin.math.sqrt
 
 class TileLevel(
-    private val textureDefinitions: Array<TextureDefinition>,
+    private val materialDefinitions: Array<MaterialDefinition>,
     private val width: Int,
     private val height: Int,
     val level: Int,
-    private val tiles: Map<Int, MapDefinition>
+    private val tiles: Map<Int, MapDefinition>,
 ) {
 
     private val tileBrightness = Array(width + 1) { ByteArray(height + 1) }
@@ -32,9 +32,9 @@ class TileLevel(
 
     private fun setBrightness(brightnessX: Float, brightnessY: Float, brightnessZ: Float) {
         val total = sqrt((brightnessX * brightnessX + brightnessY * brightnessY + brightnessZ * brightnessZ).toDouble()).toFloat()
-        lightX = (brightnessX * 65535.0f / total).toInt()// -36578
-        lightY = (brightnessY * 65535.0f / total).toInt()// -40235
-        lightZ = (brightnessZ * 65535.0f / total).toInt()// -36578
+        lightX = (brightnessX * 65535.0f / total).toInt() // -36578
+        lightY = (brightnessY * 65535.0f / total).toInt() // -40235
+        lightZ = (brightnessZ * 65535.0f / total).toInt() // -36578
     }
 
     fun loadBrightness() {
@@ -108,7 +108,7 @@ class TileLevel(
     }
 
     private fun isTypeFourEightNine(i: Int): Boolean {
-        if (settings and 0x8 == 0) {// not water
+        if (settings and 0x8 == 0) { // not water
             return false
         }
         if (i == 4) {
@@ -116,12 +116,12 @@ class TileLevel(
         }
         return if (i == 8) {
             true
-        } else i == 9
+        } else {
+            i == 9
+        }
     }
 
-    private fun textureColour(i: Int): Int {
-        return textureDefinitions[i].colour and 0xffff
-    }
+    private fun textureColour(i: Int): Int = materialDefinitions[i].colour and 0xffff
 
     private fun light(light: Int, colour: Int): Int {
         var lighting = light
@@ -137,7 +137,7 @@ class TileLevel(
     }
 
     fun drawTiles(startX: Int, startY: Int, endX: Int, endY: Int, currentLevel: Int, useUnderlay: MapTileSettings, raster: Raster) {
-        val actualWidth = (endY - startY) * 1024 / 256// width * 4
+        val actualWidth = (endY - startY) * 1024 / 256 // width * 4
         var y = 0
         var x = actualWidth
         var xOffsets: IntArray? = null
@@ -195,7 +195,7 @@ class TileLevel(
                                     xOffset3,
                                     light(brightness[i1].toInt(), blend),
                                     light(brightness[i2].toInt(), blend),
-                                    light(brightness[i3].toInt(), blend)
+                                    light(brightness[i3].toInt(), blend),
                                 )
                             } else if (colours.textureIds == null || colours.textureIds!![index].toInt() == -1) {
                                 // corners
@@ -209,7 +209,7 @@ class TileLevel(
                                     xOffset3,
                                     light(brightness[i1].toInt(), colour),
                                     light(brightness[i2].toInt(), colour),
-                                    light(brightness[i3].toInt(), colour)
+                                    light(brightness[i3].toInt(), colour),
                                 )
                             } else {
                                 // water corners
@@ -223,7 +223,7 @@ class TileLevel(
                                     xOffset3,
                                     light(brightness[i1].toInt(), texture),
                                     light(brightness[i2].toInt(), texture),
-                                    light(brightness[i3].toInt(), texture)
+                                    light(brightness[i3].toInt(), texture),
                                 )
                             }
                         }
@@ -248,7 +248,7 @@ class TileLevel(
         colours: IntArray,
         blendColours: IntArray?,
         textures: IntArray,
-        scales: IntArray
+        scales: IntArray,
     ) {
         if (tileColours == null) {
             tileColours = Array(width) { arrayOfNulls(height) }
@@ -308,7 +308,7 @@ class TileLevel(
                 }
                 val id = textures[index]
                 if (id != -1) {
-                    val textureMetrics = textureDefinitions[id]
+                    val textureMetrics = materialDefinitions[id]
                     if (!textureMetrics.useTextureColour) {
                         withoutTexture = true
                         if (isTypeFourEightNine(textureMetrics.type.toInt()) || textureMetrics.aByte1211.toInt() != 0 || textureMetrics.aByte1203.toInt() != 0) {
@@ -346,7 +346,7 @@ class TileLevel(
                     textureColour.vertexIndices2!![textureColour.count.toInt()] = vertexIndices2[index].toShort()
                     textureColour.vertexIndices3!![textureColour.count.toInt()] = vertexIndices3[index].toShort()
                     if (withoutTexture) {
-                        if (textures[index] == -1 || textureDefinitions[textures[index]].useTextureColour) {
+                        if (textures[index] == -1 || materialDefinitions[textures[index]].useTextureColour) {
                             textureColour.textureIds!![textureColour.count.toInt()] = (-1).toShort()
                         } else {
                             textureColour.textureIds!![textureColour.count.toInt()] = textures[index].toShort()
@@ -370,9 +370,9 @@ class TileLevel(
             if (tile(x, y).height == tile(x + 1, y).height && tile(x, y).height == tile(x + 1, y + 1).height && tile(x, y).height == tile(x, y + 1).height) {
                 tileColour.type = (tileColour.type.toInt() or 0x1).toByte()
             }
-            var textureMetrics: TextureDefinition? = null
+            var textureMetrics: MaterialDefinition? = null
             if (texture != -1) {
-                textureMetrics = textureDefinitions[texture]
+                textureMetrics = materialDefinitions[texture]
             }
             if (textureMetrics != null && tileColour.type.toInt() and 0x2 == 0 && !textureMetrics.useTextureColour) {
                 tileColour.middleColourIndex = (tileBrightness[x][y] - tileShadows[x][y]).toShort()

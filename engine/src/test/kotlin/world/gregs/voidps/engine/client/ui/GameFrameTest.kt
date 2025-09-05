@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import world.gregs.voidps.cache.definition.data.InterfaceDefinition
-import world.gregs.voidps.engine.client.ui.Interfaces.Companion.ROOT_ID
-import world.gregs.voidps.engine.client.ui.Interfaces.Companion.ROOT_INDEX
 
 internal class GameFrameTest : InterfaceTest() {
 
@@ -14,9 +12,9 @@ internal class GameFrameTest : InterfaceTest() {
     override fun setup() {
         super.setup()
         interfaces = Interfaces(events, client, definitions, open)
-        every { definitions.get("") } returns InterfaceDefinition()
-        every { definitions.get("toplevel_full") } returns InterfaceDefinition(id = -1, extras = mapOf("parent_resize" to ROOT_ID, "index_resize" to ROOT_INDEX))
-        every { definitions.get("toplevel") } returns InterfaceDefinition(extras = mapOf("parent_fixed" to ROOT_ID, "index_fixed" to ROOT_INDEX))
+        every { definitions.getOrNull("") } returns InterfaceDefinition()
+        every { definitions.getOrNull("toplevel_full") } returns InterfaceDefinition(id = -1, type = "root")
+        every { definitions.getOrNull("toplevel") } returns InterfaceDefinition(type = "root")
     }
 
     @Test
@@ -32,14 +30,14 @@ internal class GameFrameTest : InterfaceTest() {
     @Test
     fun `Size set top level if full open`() {
         interfaces.resizable = true
-        open.add("toplevel_full")
+        open["root"] = "toplevel_full"
         assertTrue(interfaces.setDisplayMode(Interfaces.FIXED_SCREEN))
         assertEquals(false, interfaces.resizable)
     }
 
     @Test
     fun `Size set full if top level open`() {
-        open.add("toplevel")
+        open["root"] = "toplevel"
         assertTrue(interfaces.setDisplayMode(Interfaces.RESIZABLE_SCREEN))
         assertEquals(true, interfaces.resizable)
     }

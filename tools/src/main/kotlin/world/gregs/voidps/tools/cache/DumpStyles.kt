@@ -6,12 +6,13 @@ import world.gregs.voidps.cache.CacheDelegate
 import world.gregs.voidps.cache.definition.data.ClientScriptDefinition
 import world.gregs.voidps.cache.definition.data.Instructions
 import world.gregs.voidps.cache.definition.decoder.ClientScriptDecoder
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.data.config.WeaponStyleDefinition
-import world.gregs.voidps.tools.property
 import java.io.File
 
 object DumpStyles {
-    private val names = arrayOf("unarmed",
+    private val names = arrayOf(
+        "unarmed",
         "staff",
         "axe",
         "sceptre",
@@ -37,11 +38,13 @@ object DumpStyles {
         "flail",
         "sling",
         "trident",
-        "staff_of_light")
+        "staff_of_light",
+    )
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val cache: Cache = CacheDelegate(property("cachePath"))
+        Settings.load()
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
         val decoder = ClientScriptDecoder().load(cache)
         val clientScript = decoder[1142]
         load(clientScript)
@@ -89,14 +92,17 @@ object DumpStyles {
             when (instruction) {
                 Instructions.PUSH_STRING -> strings[index]?.also { string ->
                     if (last == Instructions.GOTO || last == Instructions.MERGE_STRINGS) {
-                        if (string.isNotEmpty())
+                        if (string.isNotEmpty()) {
                             types.add(string.toSnakeCase())
+                        }
                     } else if (last == Instructions.PUSH_INT) {
-                        if (string.isNotEmpty())
+                        if (string.isNotEmpty()) {
                             styles.add(string.toSnakeCase())
+                        }
                     } else if (last == Instructions.PUSH_STRING && strings[index - 1] == "<br>" && !string.endsWith("XP")) {
-                        if (string.isNotEmpty())
+                        if (string.isNotEmpty()) {
                             combatStyles.add(string.toSnakeCase())
+                        }
                     }
                 }
                 Instructions.CALL_CS2 -> break
@@ -104,13 +110,15 @@ object DumpStyles {
             last = instruction
             index++
         }
-        println("""
+        println(
+            """
             ${names[id]}:
               id: $id
               attack_types: $types
               attack_styles: $styles
               combat_styles: $combatStyles
-        """.trimIndent())
+            """.trimIndent(),
+        )
 //        return types.mapIndexed { i, s -> Triple(s, styles[i], combatStyle.getOrNull(i) ?: "") }.toTypedArray()
     }
 }

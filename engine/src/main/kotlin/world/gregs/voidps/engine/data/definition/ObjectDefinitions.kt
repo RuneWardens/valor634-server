@@ -1,55 +1,69 @@
 package world.gregs.voidps.engine.data.definition
 
+import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import world.gregs.config.Config
 import world.gregs.voidps.cache.definition.data.ObjectDefinition
-import world.gregs.voidps.engine.client.ui.chat.toIntRange
 import world.gregs.voidps.engine.data.definition.data.Pickable
 import world.gregs.voidps.engine.data.definition.data.Rock
 import world.gregs.voidps.engine.data.definition.data.Tree
-import world.gregs.voidps.engine.data.yaml.DefinitionConfig
-import world.gregs.voidps.engine.get
-import world.gregs.voidps.engine.getProperty
 import world.gregs.voidps.engine.timedLoad
-import world.gregs.yaml.Yaml
 
 class ObjectDefinitions(
-    override var definitions: Array<ObjectDefinition>
+    override var definitions: Array<ObjectDefinition>,
 ) : DefinitionsDecoder<ObjectDefinition> {
 
     override lateinit var ids: Map<String, Int>
 
-    fun getValue(id: Int): ObjectDefinition {
-        return definitions[id]
-    }
+    fun getValue(id: Int): ObjectDefinition = definitions[id]
 
     override fun empty() = ObjectDefinition.EMPTY
 
-    @Suppress("UNCHECKED_CAST")
-    fun load(yaml: Yaml = get(), path: String = getProperty("objectDefinitionsPath")): ObjectDefinitions {
+    fun load(paths: List<String>): ObjectDefinitions {
         timedLoad("object extra") {
             val ids = Object2IntOpenHashMap<String>()
-            this.ids = ids
-            val config = object : DefinitionConfig<ObjectDefinition>(ids, definitions) {
-                override fun set(map: MutableMap<String, Any>, key: String, value: Any, indent: Int, parentMap: String?) {
-                    if (key == "<<") {
-                        map.putAll(value as Map<String, Any>)
-                    } else if (indent == 1) {
-                        super.set(map, key,
-                            when (key) {
-                                "pickable" -> Pickable(value as Map<String, Any>)
-                                "woodcutting" -> Tree(value as Map<String, Any>)
-                                "mining" -> Rock(value as Map<String, Any>)
-                                else -> value
-                            }, indent, parentMap)
-                    } else {
-                        super.set(map, key, when (key) {
-                            "chance", "hatchet_low_dif", "hatchet_high_dif", "respawn" -> (value as String).toIntRange()
-                            else -> value
-                        }, indent, parentMap)
+            ids.defaultReturnValue(-1)
+            for (path in paths) {
+                Config.fileReader(path) {
+                    while (nextSection()) {
+                        val stringId = section()
+                        var id = -1
+                        val extras = Object2ObjectOpenHashMap<String, Any>(4, Hash.VERY_FAST_LOAD_FACTOR)
+                        while (nextPair()) {
+                            when (val key = key()) {
+                                "id" -> id = int()
+                                "pickable" -> extras[key] = Pickable(this)
+                                "woodcutting" -> extras[key] = Tree(this)
+                                "mining" -> extras[key] = Rock(this)
+                                "clone" -> {
+                                    val name = string()
+                                    val obj = ids.getInt(name)
+                                    require(obj >= 0) { "Cannot find object id to clone '$name'" }
+                                    val definition = definitions[obj]
+                                    extras.putAll(definition.extras ?: continue)
+                                }
+                                "categories" -> {
+                                    val categories = ObjectLinkedOpenHashSet<String>(2, Hash.VERY_FAST_LOAD_FACTOR)
+                                    while (nextElement()) {
+                                        categories.add(string())
+                                    }
+                                    extras["categories"] = categories
+                                }
+                                else -> extras[key] = value()
+                            }
+                        }
+                        require(!ids.containsKey(stringId)) { "Duplicate object id found '$stringId' at $path." }
+                        ids[stringId] = id
+                        definitions[id].stringId = stringId
+                        if (extras.isNotEmpty()) {
+                            definitions[id].extras = extras
+                        }
                     }
                 }
             }
-            yaml.load<Any>(path, config)
+            this.ids = ids
             ids.size
         }
         return this

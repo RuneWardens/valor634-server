@@ -1,0 +1,142 @@
+[man]
+id = 1
+max_hit_melee = 10
+hitpoints = 70
+wander_radius = 4
+respawn_delay = 25
+pickpocket = { stun_hit = 10, stun_ticks = 8, xp = 8.0, chance_min = 180, chance_max = 240 }
+drop_table = "human"
+style = "crush"
+combat_anims = "human"
+combat_sounds = "man"
+categories = ["human"]
+examine = "One of Gielinor's many citizens."
+
+[man_2]
+clone = "man"
+id = 2
+
+[man_3]
+clone = "man"
+id = 3
+
+[woman]
+id = 4
+max_hit_melee = 10
+hitpoints = 70
+wander_radius = 4
+respawn_delay = 25
+pickpocket = { stun_hit = 10, stun_ticks = 8, xp = 8.0, chance_min = 180, chance_max = 240 }
+drop_table = "human"
+style = "crush"
+combat_anims = "human"
+combat_sounds = "woman"
+categories = ["human"]
+examine = "One of Gielinor's many citizens."
+
+[woman_2]
+clone = "woman"
+id = 5
+
+[woman_3]
+clone = "woman"
+id = 6
+
+[wizard_distentor]
+id = 462
+collision = "indoors"
+examine = "Head of the Magic Guild."
+
+[jeffery]
+id = 637
+wander_radius = 4
+categories = ["human"]
+collision = "indoors"
+examine = "The man with the armour."
+
+[bartender_foresters_arms]
+id = 737
+bar_crawl = {
+  id = "liverbane_ale",
+  price = 18,
+  start = "Oh you're a barbarian then. Now which of these barrels contained the Liverbane Ale? That'll be 18 coins please.",
+  insufficient = "Sorry, I don't have 18 coins.",
+  give = "The bartender gives you a glass of Liverbane Ale.",
+  drink = "You gulp it down.",
+  effect = "The room seems to be swaying.",
+  sign = "The bartender scrawls his signature on your card."
+}
+categories = ["human"]
+wander_radius = 5
+collision = "indoors"
+examine = "I could get a beer from him."
+
+[bartender_flying_horse_inn]
+id = 738
+bar_crawl = {
+  id = "heart_stopper",
+  price = 8,
+  start = "Fancy a bit of Heart Stopper then do you? It'll only be 8 coins.",
+  insufficient = "Sorry, I don't have 8 coins.",
+  give = "The bartender hands you a shot of Heart Stopper.",
+  drink = "You grimace and drink it.",
+  effect = "You clutch your chest.",
+  sign = "Through your tears you see the bartender..."
+}
+categories = ["human"]
+wander_radius = 3
+collision = "indoors"
+examine = "I could get a beer from him."
+
+[bartender_dragon_inn]
+id = 739
+bar_crawl = {
+  id = "fire_brandy",
+  price = 12,
+  start = "I suppose you'll be wanting some Fire Brandy. That'll cost you 12 coins.",
+  insufficient = "Sorry I don't have 12 coins.",
+  give = "The bartender hands you a small glass and sets light to the contents.",
+  drink = "You blow out the flame and drink it.",
+  effect = "Your vision blurs and you stagger slightly.",
+  sign = "You can just about make out the bartender signing your barcrawl card."
+}
+categories = ["human"]
+wander_radius = 5
+collision = "indoors"
+examine = "I could get a beer from him."
+
+[wizard_cromperty]
+id = 844
+examine = "The hat is a dead give away."
+
+[wizard_cromperty_normal]
+id = 2328
+examine = "The hat is a dead give away."
+
+[tools_leprechaun]
+id = 3021
+categories = ["human"]
+wander_radius = 2
+examine = "Looks after your farming tools."
+
+[jeffery3]
+id = 3323
+wander_radius = 4
+categories = ["human"]
+examine = "The man with the armour."
+
+[thakkrad_sigmundson_cutscene]
+id = 5466
+categories = ["human"]
+examine = "A young master craftsman."
+
+[thakkrad_sigmundson]
+id = 5506
+categories = ["human"]
+examine = "A young master craftsman."
+
+[jeffery_normal]
+id = 6298
+wander_radius = 4
+categories = ["human"]
+examine = "The man with the armour."

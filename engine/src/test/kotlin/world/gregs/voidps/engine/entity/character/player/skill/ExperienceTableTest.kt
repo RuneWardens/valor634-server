@@ -7,6 +7,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.skill.exp.BlockedExperience
 import world.gregs.voidps.engine.entity.character.player.skill.exp.Experience
@@ -48,11 +49,13 @@ internal class ExperienceTableTest {
 
     @Test
     fun `Add experience with 10x rate`() {
-        experience = Experience(maximum = 500.0, rate = 10.0)
+        Settings.load(mapOf("world.experienceRate" to "10.0"))
+        experience = Experience(maximum = 500.0)
         experience.events = events
         experience.add(Skill.Attack, 10.0)
         experience.add(Skill.Attack, 10.0)
         assertEquals(200.0, experience.get(Skill.Attack))
+        Settings.clear()
     }
 
     @Test
@@ -131,5 +134,4 @@ internal class ExperienceTableTest {
         player.exp(Skill.Attack, 10.0)
         assertEquals(20.0, experience.get(Skill.Attack))
     }
-
 }

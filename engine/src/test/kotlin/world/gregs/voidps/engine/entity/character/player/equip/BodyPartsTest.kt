@@ -24,15 +24,15 @@ internal class BodyPartsTest {
     @MockK
     lateinit var equipment: Inventory
 
-    lateinit var looks: IntArray
+    private lateinit var looks: IntArray
 
-    lateinit var body: BodyParts
+    private lateinit var body: BodyParts
 
     @BeforeEach
     fun setup() {
         looks = IntArray(12)
         body = BodyParts(true, looks)
-        body.link(equipment)
+        body.link(equipment, AppearanceOverrides())
     }
 
     @Test
@@ -51,7 +51,7 @@ internal class BodyPartsTest {
         every { equipment[1] } returns item
         every { item.def.type } returns EquipType.None
         every { item.def.contains("equip") } returns true
-        every { item.def["equip", -1] } returns 2
+        every { item.def.equipIndex } returns 2
         body.update(BodyPart.Back, false)
         assertEquals(2 or 0x8000, body.get(1))
     }
@@ -62,7 +62,7 @@ internal class BodyPartsTest {
         val item = item("")
         every { equipment[4] } returns item
         every { item.def.type } returns EquipType.None
-        every { item.def["equip", -1] } returns -1
+        every { item.def.equipIndex } returns -1
         body.update(BodyPart.Chest, false)
         assertEquals(321 + 0x100, body.get(4))
     }
@@ -71,8 +71,7 @@ internal class BodyPartsTest {
     fun `Update missing item and look sets to zero`() {
         // Given
         val item = item("123")
-        every { item.def.contains("equip") } returns false
-        every { item.def["equip", -1] } returns -1
+        every { item.def.equipIndex } returns -1
         every { item.def.type } returns EquipType.None
         every { equipment[10] } returns item
         val other = item("")
@@ -101,7 +100,7 @@ internal class BodyPartsTest {
     fun `Skull skipped if hair`() {
         val item = item("")
         every { item.def.type } returns EquipType.Hair
-        every { item.def["equip", -1] } returns -1
+        every { item.def.equipIndex } returns -1
         every { equipment[0] } returns item
         body.update(BodyPart.Head, false)
         assertEquals(0, body.get(0))
@@ -112,7 +111,7 @@ internal class BodyPartsTest {
         val item = item("")
         every { equipment[0] } returns item
         every { item.def.type } returns EquipType.FullFace
-        every { item.def["equip", -1] } returns -1
+        every { item.def.equipIndex } returns -1
         body.update(BodyPart.Head, false)
         assertEquals(0, body.get(0))
     }
@@ -123,7 +122,7 @@ internal class BodyPartsTest {
         every { equipment[0] } returns item
         every { item.def.type } returns EquipType.Mask
         body.update(BodyPart.Beard, false)
-        assertEquals(0, body.get(0))
+        assertEquals(0, body.getLook(0))
     }
 
     @Test
@@ -183,5 +182,4 @@ internal class BodyPartsTest {
         every { item.isNotEmpty() } returns id.isNotBlank()
         return item
     }
-
 }

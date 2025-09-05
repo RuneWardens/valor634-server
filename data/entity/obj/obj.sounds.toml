@@ -1,0 +1,26 @@
+[chest_open]
+id = 52
+
+[casket_open]
+id = 50
+
+[cupboard_close]
+id = 57
+
+[cupboard_open]
+id = 58
+
+[destroy_object]
+id = 2381
+
+[lever]
+id = 2400
+
+[coffin_open]
+id = 54
+
+[drawer_close]
+id = 63
+
+[drawer_open]
+id = 64

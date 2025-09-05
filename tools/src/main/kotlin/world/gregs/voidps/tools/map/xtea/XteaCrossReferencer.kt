@@ -2,6 +2,7 @@ package world.gregs.voidps.tools.map.xtea
 
 import com.displee.cache.CacheLibrary
 import world.gregs.voidps.cache.Index
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.tools.cache.Xteas
 import world.gregs.voidps.type.Region
 import java.io.File
@@ -42,7 +43,8 @@ object XteaCrossReferencer {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val library = CacheLibrary("./data/cache/")
+        Settings.load()
+        val library = CacheLibrary(Settings["storage.cache.path"])
         val xteas = Xteas().load(path = "./tools/src/main/resources/xteas.dat")
 
         val xteasList = all("${System.getProperty("user.home")}\\Downloads\\rs634_cache\\xteas\\xteas.dat")
@@ -66,7 +68,7 @@ object XteaCrossReferencer {
         val missing = mutableListOf<Region>()
         for (regionX in 0 until 256) {
             for (regionY in 0 until 256) {
-                val archiveId = index.archiveId("l${regionX}_${regionY}")
+                val archiveId = index.archiveId("l${regionX}_$regionY")
                 if (!archives.contains(archiveId)) {
                     continue
                 }
@@ -96,7 +98,7 @@ object XteaCrossReferencer {
         }
         dir.mkdir()
         decrypted.forEach { (region, keys) ->
-            val file = File("./xteas/${region}.txt")
+            val file = File("./xteas/$region.txt")
             file.writeText(keys.joinToString("\n"))
         }
 //        File("./xteas634.txt").writeText(decrypted.joinToString("\n") { "${it.first.id}, ${it.second.joinToString()}" })
@@ -105,9 +107,7 @@ object XteaCrossReferencer {
 
     private fun blank(keys: IntArray) = keys[0] == 0 && keys[1] == 0 && keys[2] == 0 && keys[3] == 0
 
-    private fun isReal(library: CacheLibrary, archiveId: Int, keys: IntArray): Boolean {
-        return library.data(Index.MAPS, archiveId, 0, keys) != null
-    }
+    private fun isReal(library: CacheLibrary, archiveId: Int, keys: IntArray): Boolean = library.data(Index.MAPS, archiveId, 0, keys) != null
 
     /*fun isValid(buffer: ByteBuf, sector: ByteArray, keys: IntArray): Boolean {
         buffer.readerIndex(0)
@@ -127,5 +127,4 @@ object XteaCrossReferencer {
     private const val BZIP2 = 1
     private const val GZIP = 2
     private const val LZMA = 3
-
 }

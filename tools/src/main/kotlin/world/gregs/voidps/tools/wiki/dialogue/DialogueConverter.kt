@@ -11,21 +11,22 @@ import world.gregs.yaml.read.YamlReaderConfiguration
 import java.io.File
 import java.util.*
 
+/**
+ * Converts raw data from runelites data collection project into dialogue scripts
+ */
 @Suppress("UNCHECKED_CAST")
 object DialogueConverter {
 
     data class DialogueOption(
         val child: DialogueUnion? = null,
-        val message: String? = null
+        val message: String? = null,
     ) {
         companion object {
 
-            operator fun invoke(map: Map<String, Any>): DialogueOption {
-                return DialogueOption(
-                    map["child"] as? DialogueUnion,
-                    map["message"] as? String
-                )
-            }
+            operator fun invoke(map: Map<String, Any>): DialogueOption = DialogueOption(
+                map["child"] as? DialogueUnion,
+                map["message"] as? String,
+            )
         }
     }
 
@@ -35,15 +36,15 @@ object DialogueConverter {
         var npc: Int?,
         var animation: Int?,
         var neighbors: List<DialogueUnion>? = null,
-        var options: List<DialogueOption>? = null
+        var options: List<DialogueOption>? = null,
     ) {
 
         val builder: StringBuilder by lazy { StringBuilder() }
 
-        override fun hashCode(): Int {
-            return if (isRootNode) {
-                Objects.hash(neighbors)
-            } else Objects.hash(npc, text, name, options)
+        override fun hashCode(): Int = if (isRootNode) {
+            Objects.hash(neighbors)
+        } else {
+            Objects.hash(npc, text, name, options)
         }
 
         override fun equals(other: Any?): Boolean {
@@ -75,19 +76,16 @@ object DialogueConverter {
         val isRootNode: Boolean
             get() = npc == null && animation == null && text == null && name == null && neighbors != null
 
-
         companion object {
 
-            operator fun invoke(map: Map<String, Any>): DialogueUnion {
-                return DialogueUnion(
-                    map["text"] as? String,
-                    map["name"] as? String,
-                    map["npc"] as? Int,
-                    map["animation"] as? Int,
-                    map["neighbors"] as? List<DialogueUnion>,
-                    map["options"] as? List<DialogueOption>
-                )
-            }
+            operator fun invoke(map: Map<String, Any>): DialogueUnion = DialogueUnion(
+                map["text"] as? String,
+                map["name"] as? String,
+                map["npc"] as? Int,
+                map["animation"] as? Int,
+                map["neighbors"] as? List<DialogueUnion>,
+                map["options"] as? List<DialogueOption>,
+            )
         }
     }
 
@@ -160,9 +158,7 @@ object DialogueConverter {
         }
     }
 
-    private fun getNpcName(id: Int): String {
-        return "$id"
-    }
+    private fun getNpcName(id: Int): String = "$id"
 
     private fun writeAll(file: File, name: String, functions: ObjectOpenHashSet<DialogueUnion>) {
         val sorted = functions.sortedBy { it.neighbors?.size ?: 0 }.toMutableList()
@@ -180,20 +176,22 @@ object DialogueConverter {
         if (file.exists()) {
             file.delete()
         }
-        file.appendText("""
+        file.appendText(
+            """
             package world.gregs.voidps.world.map
 
-            import world.gregs.voidps.engine.entity.character.CharacterContext
-            import world.gregs.voidps.engine.entity.character.npc.NPCOption
             import world.gregs.voidps.engine.entity.character.player.Player
-            import world.gregs.voidps.engine.event.on
-            import world.gregs.voidps.world.interact.dialogue.*
-            import world.gregs.voidps.world.interact.dialogue.type.*
+            import content.entity.player.dialogue.*
+            import content.entity.player.dialogue.type.*
+            import world.gregs.voidps.engine.entity.character.mode.interact.TargetInteraction
+            import world.gregs.voidps.engine.entity.character.npc.NPC
+            import world.gregs.voidps.engine.entity.character.npc.npcOperate
             
             npcOperate("Talk-to", "$name") {
                 startDialogue()
             }
-        """.trimIndent())
+            """.trimIndent(),
+        )
         file.appendText("\n\n")
         for (parent: DialogueUnion in sorted) {
             file.appendText(parent.builder.toString().replace("\t", "    "))
@@ -207,14 +205,14 @@ object DialogueConverter {
         nextParent: DialogueUnion?,
         front: DialogueUnion,
         branchToFunction: Object2ObjectOpenHashMap<DialogueUnion?, String>,
-        parents: ObjectOpenHashSet<DialogueUnion>
+        parents: ObjectOpenHashSet<DialogueUnion>,
     ) {
         val lastNode = parent != nextParent
         val builder = parent.builder
         if (parent != previousParent) {
             val function = branchToFunction[parent]
             if (function != null) {
-                builder.append("suspend fun CharacterContext.").append(function).append("() {\n")
+                builder.append("suspend fun TargetInteraction<Player, NPC>.").append(function).append("() {\n")
             }
         }
         if (front.isNPCDialogue) {
@@ -224,7 +222,6 @@ object DialogueConverter {
                 builder.append(getNpcName(front.npc!!)).append(", ")
             }
             builder.append("\"").append(front.text).append("\"").append(")")
-
         } else if (front.isPlayerDialogue) {
             val anim = getAnimName(front.animation)
             builder.append("\tplayer").append("<").append(anim).append(">").append("(").append("\"").append(front.text).append("\"").append(")")
@@ -249,7 +246,7 @@ object DialogueConverter {
         } else {
             val function = branchToFunction[parent]
             if (function != null) {
-                builder.append("suspend fun CharacterContext.").append(function).append("() {\n")
+                builder.append("suspend fun TargetInteraction<Player, NPC>.").append(function).append("() {\n")
             }
             return
         }
@@ -261,23 +258,21 @@ object DialogueConverter {
         }
     }
 
-    private fun getAnimName(animation: Int?): String {
-        return when (animation) {
-            554, 555, 556, 557 -> "Quiz"
-            562, 563, 564, 565 -> "RollEyes"
-            567, 568, 569, 570 -> "Happy"
-            571, 572, 573, 574 -> "Surprised"
-            575, 576, 577, 578 -> "Uncertain"
-            588, 589, 590, 591 -> "Talk"
-            592, 593, 594, 595 -> "shifty"
-            596, 597, 598, 599 -> "Afraid"
-            600, 601, 602, 603 -> "Drunk"
-            605, 606, 607, 608 -> "Chuckle"
-            609 -> "EvilLaugh"
-            610, 611, 612, 613 -> "Upset"
-            614, 615, 616, 617 -> "Angry"
-            else -> animation.toString()
-        }
+    private fun getAnimName(animation: Int?): String = when (animation) {
+        554, 555, 556, 557 -> "Quiz"
+        562, 563, 564, 565 -> "RollEyes"
+        567, 568, 569, 570 -> "Happy"
+        571, 572, 573, 574 -> "Surprised"
+        575, 576, 577, 578 -> "Uncertain"
+        588, 589, 590, 591 -> "Talk"
+        592, 593, 594, 595 -> "Shifty"
+        596, 597, 598, 599 -> "Afraid"
+        600, 601, 602, 603 -> "Drunk"
+        605, 606, 607, 608 -> "Chuckle"
+        609 -> "EvilLaugh"
+        610, 611, 612, 613 -> "Upset"
+        614, 615, 616, 617 -> "Angry"
+        else -> animation.toString()
     }
 
     private fun toFunction(message: String?): String {

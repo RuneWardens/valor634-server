@@ -10,12 +10,13 @@ import world.gregs.voidps.cache.definition.decoder.ClientScriptDecoder
 import world.gregs.voidps.cache.definition.decoder.InterfaceDecoderFull
 import world.gregs.voidps.cache.definition.encoder.ClientScriptEncoder
 import world.gregs.voidps.cache.definition.encoder.InterfaceEncoder
+import world.gregs.voidps.engine.data.Settings
 import java.io.File
 
 object MoveCameraClientScript {
     private val INTERFACES = mapOf(
         548 to 3,
-        746 to 0
+        746 to 0,
     )
     private const val SCRIPT_ID = 4731
 
@@ -25,7 +26,7 @@ object MoveCameraClientScript {
         // Decode script
         val scriptDef = findMouseScript(otherCache)
         val newScriptId = addScript(cache, scriptDef)
-        println("Add mouse move client script ${newScriptId}.")
+        println("Add mouse move client script $newScriptId.")
 
         packInterfacesWithScript(cache, otherCache, newScriptId)
         cache.update()
@@ -89,8 +90,8 @@ object MoveCameraClientScript {
     @JvmStatic
     fun main(args: Array<String>) {
         val path718 = "./temp/cache/cache-667/"
-        val path = "./data/cache/"
-        val cache = CacheLibrary(path)
+        Settings.load()
+        val cache = CacheLibrary(Settings["storage.cache.path"])
         convert(cache, File(path718))
     }
 }

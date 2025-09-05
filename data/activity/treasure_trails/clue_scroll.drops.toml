@@ -1,0 +1,19 @@
+[easy_clue_scroll]
+drops = [
+    { id = "clue_scroll_easy", lacks = "clue_scroll_easy*", members = true }
+]
+
+[medium_clue_scroll]
+drops = [
+    { id = "clue_scroll_medium", lacks = "clue_scroll_medium*", members = true }
+]
+
+[hard_clue_scroll]
+drops = [
+    { id = "clue_scroll_hard", lacks = "clue_scroll_hard*", members = true }
+]
+
+[elite_clue_scroll]
+drops = [
+    { id = "clue_scroll_elite", lacks = "clue_scroll_elite*", members = true }
+]

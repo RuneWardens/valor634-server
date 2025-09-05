@@ -1,26 +1,42 @@
 package world.gregs.voidps.engine.data.definition
 
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import world.gregs.config.Config
 import world.gregs.voidps.engine.data.config.MidiDefinition
-import world.gregs.voidps.engine.data.yaml.decode
-import world.gregs.voidps.engine.get
-import world.gregs.voidps.engine.getProperty
 import world.gregs.voidps.engine.timedLoad
-import world.gregs.yaml.Yaml
 
 class MidiDefinitions : DefinitionsDecoder<MidiDefinition> {
 
     override lateinit var definitions: Array<MidiDefinition>
     override lateinit var ids: Map<String, Int>
 
-    fun load(yaml: Yaml = get(), path: String = getProperty("midiDefinitionsPath")): MidiDefinitions {
+    fun load(paths: List<String>): MidiDefinitions {
         timedLoad("midi definition") {
-            decode(yaml, path) { id, key, _ ->
-                MidiDefinition(id = id, stringId = key)
+            val ids = Object2IntOpenHashMap<String>(50, Hash.VERY_FAST_LOAD_FACTOR)
+            val definitions = Array(4000) { MidiDefinition.EMPTY }
+            for (path in paths) {
+                Config.fileReader(path) {
+                    while (nextSection()) {
+                        val stringId = section()
+                        var id = -1
+                        while (nextPair()) {
+                            when (val key = key()) {
+                                "id" -> id = int()
+                                else -> throw IllegalArgumentException("Unknown midi key: $key")
+                            }
+                        }
+                        ids[stringId] = id
+                        definitions[id] = MidiDefinition(id = id, stringId = stringId)
+                    }
+                }
             }
+            this.definitions = definitions
+            this.ids = ids
+            ids.size
         }
         return this
     }
 
     override fun empty() = MidiDefinition.EMPTY
-
 }

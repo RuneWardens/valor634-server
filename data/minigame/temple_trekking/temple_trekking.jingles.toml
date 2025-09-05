@@ -1,0 +1,11 @@
+[temple_trek_complete]
+id = 194
+
+[temple_trekking_start]
+id = 195
+
+[temple_trekking_failure]
+id = 196
+
+[temple_trekking_success]
+id = 197

@@ -1,5 +1,6 @@
 package world.gregs.voidps.tools.convert
 
+import world.gregs.config.Config
 import world.gregs.voidps.buffer.write.BufferWriter
 import world.gregs.voidps.cache.CacheDelegate
 import world.gregs.voidps.cache.Config.INVENTORIES
@@ -7,16 +8,17 @@ import world.gregs.voidps.cache.Index
 import world.gregs.voidps.cache.config.decoder.InventoryDecoder
 import world.gregs.voidps.cache.config.encoder.InventoryEncoder
 import world.gregs.voidps.cache.definition.decoder.ItemDecoder
+import world.gregs.voidps.engine.data.Settings
+import world.gregs.voidps.engine.data.configFiles
 import world.gregs.voidps.engine.data.definition.ItemDefinitions
-import world.gregs.voidps.tools.property
-import world.gregs.yaml.Yaml
+import world.gregs.voidps.engine.data.list
 import java.io.File
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
 /**
- * Converts inventories from one cache into another, dumping the default values into inventories.yml
+ * Converts inventories from one cache into another, dumping the default values into inventories.toml
  */
 @Suppress("UNCHECKED_CAST")
 object InventoryConverter {
@@ -25,12 +27,28 @@ object InventoryConverter {
         val targetCache = CacheDelegate(target.path)
         val otherCache = CacheDelegate(provider.path)
 
-        val yaml = Yaml()
         val otherDecoder = InventoryDecoder().load(otherCache)
         val targetDecoder = InventoryDecoder().load(targetCache)
-        val itemDefinitions = ItemDefinitions(ItemDecoder().load(targetCache)).load(yaml, property("itemDefinitionsPath"))
+        Settings.load()
+        val files = configFiles()
+        val itemDefinitions = ItemDefinitions(ItemDecoder().load(targetCache)).load(files.list(Settings["definitions.items"]))
         val encoder = InventoryEncoder()
-        val data: MutableMap<String, Any> = yaml.load<Map<String, Any>>(property("inventoryDefinitionsPath")).toMutableMap()
+        val data: MutableMap<String, Any> = mutableMapOf()
+
+        for (file in files.list(Settings["definitions.inventories"])) {
+            Config.fileReader(file) {
+                while (nextSection()) {
+                    val section = section()
+                    val map = mutableMapOf<String, Any>()
+                    while (nextPair()) {
+                        val key = key()
+                        val value = value()
+                        map[key] = value
+                    }
+                    data[section] = map
+                }
+            }
+        }
 
         var counter = 0
         for (index in targetDecoder.indices) {
@@ -72,7 +90,7 @@ object InventoryConverter {
                     map["defaults"] = list
                     data[found!!] = map
                 } else {
-                    data["inventory_${index}"] = mapOf("id" to index, "defaults" to list)
+                    data["inventory_$index"] = mapOf("id" to index, "defaults" to list)
                 }
 //                println("$index ${otherDef.ids!!.mapIndexed { index, it -> "${itemDefinitions.getOrNull(it)?.name} ${otherDef.amounts!![index]}" }.joinToString(separator = ", ")}")
             }
@@ -80,7 +98,7 @@ object InventoryConverter {
         if (targetCache.update()) {
             println("Updated $counter inventories.")
         }
-//        yaml.save("inventories.yml", data)
+//        yaml.save("inventories.toml", data)
     }
 
     @JvmStatic

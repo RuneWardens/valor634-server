@@ -1,47 +1,14 @@
 package world.gregs.voidps.engine.client.instruction
 
 import com.github.michaelbull.logging.InlineLogger
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.produceIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
-import world.gregs.voidps.engine.data.definition.ItemDefinitions
-import world.gregs.voidps.engine.data.definition.NPCDefinitions
-import world.gregs.voidps.engine.data.definition.ObjectDefinitions
-import world.gregs.voidps.engine.entity.character.npc.NPCs
 import world.gregs.voidps.engine.entity.character.player.Players
-import world.gregs.voidps.engine.entity.item.floor.FloorItems
-import world.gregs.voidps.engine.entity.obj.GameObjects
 
 class InstructionTask(
     private val players: Players,
-    npcs: NPCs,
-    items: FloorItems,
-    objects: GameObjects,
-    itemDefinitions: ItemDefinitions,
-    objectDefinitions: ObjectDefinitions,
-    npcDefinitions: NPCDefinitions,
-    interfaceDefinitions: InterfaceDefinitions,
-    handler: InterfaceHandler
+    private val handlers: InstructionHandlers,
 ) : Runnable {
 
     private val logger = InlineLogger()
-    private val handlers = InstructionHandlers(
-        players,
-        npcs,
-        items,
-        objects,
-        itemDefinitions,
-        objectDefinitions,
-        npcDefinitions,
-        interfaceDefinitions,
-        handler
-    )
 
     override fun run() {
         for (player in players) {
@@ -61,31 +28,5 @@ class InstructionTask(
 
     companion object {
         const val MAX_INSTRUCTIONS = 20
-
-        fun Flow<Int>.test() {
-
-            flow<List<Int>> {
-                coroutineScope {
-                    val upstreamChannel = buffer(10).produceIn(this)
-                    upstreamChannel.tryReceive().getOrNull()
-                }
-            }
-        }
-
-        @JvmStatic
-        fun main(args: Array<String>): Unit = runBlocking {
-
-            val channel = Channel<Int>(5)
-
-            for (i in 0 until 4) {
-                channel.send(i)
-            }
-            launch {
-                for (i in 0 until 5) {
-                    val it = channel.tryReceive().getOrNull() ?: break
-                    println(it)
-                }
-            }
-        }
     }
 }

@@ -2,7 +2,7 @@ package world.gregs.voidps.network.login.protocol.visual
 
 import world.gregs.voidps.network.login.protocol.visual.update.*
 
-abstract class Visuals(index: Int) {
+abstract class Visuals {
 
     var flag: Int = 0
         private set
@@ -10,6 +10,7 @@ abstract class Visuals(index: Int) {
     var walkStep: Int = -1
     var runStep: Int = -1
     var moved: Boolean = false
+    var tele: Boolean = false
 
     val animation = Animation()
     val primaryGraphic = Graphic()
@@ -17,32 +18,31 @@ abstract class Visuals(index: Int) {
     val colourOverlay = ColourOverlay()
     val exactMovement = ExactMovement()
     val timeBar = TimeBar()
-    val turn = Turn()
+    val face = Face()
     val watch = Watch()
-    val forceChat = ForceChat()
-    val hits = Hits(self = index)
+    val say = Say()
+    val hits = Hits()
 
     fun flag(mask: Int) {
         flag = flag or mask
     }
 
-    fun flagged(mask: Int): Boolean {
-        return flag and mask != 0
-    }
+    fun flagged(mask: Int): Boolean = flag and mask != 0
 
     open fun reset() {
         walkStep = -1
         runStep = -1
         moved = false
+        tele = false
         flag = 0
         animation.clear()
         primaryGraphic.clear()
         exactMovement.clear()
         colourOverlay.clear()
         hits.clear()
-        turn.clear()
+        face.clear()
         watch.clear()
-        forceChat.clear()
+        say.clear()
         timeBar.clear()
         secondaryGraphic.clear()
     }

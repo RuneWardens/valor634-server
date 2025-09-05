@@ -1,0 +1,8 @@
+[zombie_attack]
+id = 918
+
+[zombie_death]
+id = 922
+
+[zombie_defend]
+id = 923

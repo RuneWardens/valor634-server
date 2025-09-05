@@ -7,7 +7,7 @@ object HashCodeChecker {
     private val matches = mutableMapOf<Int, String>()
     private lateinit var known: Map<Int, String?>
     private val input = File("./temp/hashes/check.tsv")
-    private const val WRITE_CHANGES = true
+    private const val WRITE_CHANGES = false
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -37,20 +37,22 @@ object HashCodeChecker {
         }
         println("Checked ${checkList.size} against ${known.size} found ${matches.size} matches.")
         if (WRITE_CHANGES) {
-            file.writeText(file.readLines().joinToString("\n") { line ->
-                val parts = line.split("\t").toMutableList()
-                if (parts.getOrNull(4).isNullOrBlank()) {
-                    val id = parts[3].toInt()
-                    if (matches.containsKey(id)) {
-                        if (parts.size == 4) {
-                            parts.add(matches.getValue(id))
-                        } else {
-                            parts[4] = matches.getValue(id)
+            file.writeText(
+                file.readLines().joinToString("\n") { line ->
+                    val parts = line.split("\t").toMutableList()
+                    if (parts.getOrNull(4).isNullOrBlank()) {
+                        val id = parts[3].toInt()
+                        if (matches.containsKey(id)) {
+                            if (parts.size == 4) {
+                                parts.add(matches.getValue(id))
+                            } else {
+                                parts[4] = matches.getValue(id)
+                            }
                         }
                     }
-                }
-                parts.joinToString("\t")
-            })
+                    parts.joinToString("\t")
+                },
+            )
             println("Changes written to file.")
         }
     }

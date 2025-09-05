@@ -4,9 +4,7 @@ import kotlinx.coroutines.*
 import world.gregs.voidps.engine.client.ui.closeMenu
 import world.gregs.voidps.engine.client.ui.dialogue
 import world.gregs.voidps.engine.client.ui.hasMenuOpen
-import world.gregs.voidps.engine.client.variable.hasClock
 import world.gregs.voidps.engine.entity.character.Character
-import world.gregs.voidps.engine.entity.character.clearAnimation
 import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.suspend.resumeSuspension
@@ -15,7 +13,7 @@ import kotlin.coroutines.resume
 
 class ActionQueue(
     private val character: Character,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
 ) {
     private val errorHandler = CoroutineExceptionHandler { _, throwable ->
         if (throwable !is CancellationException) {
@@ -23,13 +21,13 @@ class ActionQueue(
         }
     }
 
-    private val pending = ConcurrentLinkedQueue<Action>()
-    private val queue = ConcurrentLinkedQueue<Action>()
-    private var action: Action? = null
+    private val pending = ConcurrentLinkedQueue<Action<*>>()
+    private val queue = ConcurrentLinkedQueue<Action<*>>()
+    private var action: Action<*>? = null
 
-    fun add(action: Action): Boolean {
-        return pending.add(action)
-    }
+    fun isEmpty() = queue.isEmpty() && pending.isEmpty()
+
+    fun add(action: Action<*>): Boolean = pending.add(action)
 
     fun tick() {
         queuePending()
@@ -75,9 +73,7 @@ class ActionQueue(
         }
     }
 
-    fun clear(name: String): Boolean {
-        return queue.removeIf { it.name == name } || pending.removeIf { it.name == name }
-    }
+    fun clear(name: String): Boolean = queue.removeIf { it.name == name } || pending.removeIf { it.name == name }
 
     fun clear() {
         queue.removeIf {
@@ -87,7 +83,7 @@ class ActionQueue(
         pending.clear()
     }
 
-    private fun processed(action: Action): Boolean {
+    private fun processed(action: Action<*>): Boolean {
         if (action.priority.closeInterfaces) {
             (character as? Player)?.closeMenu()
         }
@@ -97,13 +93,13 @@ class ActionQueue(
         return action.removed
     }
 
-    private fun canProcess(action: Action) = action.priority == ActionPriority.Soft || (noDelay() && noInterrupt())
+    private fun canProcess(action: Action<*>) = action.priority == ActionPriority.Soft || (noDelay() && noInterrupt())
 
-    private fun noDelay() = !character.hasClock("delay")
+    private fun noDelay() = !character.contains("delay")
 
     private fun noInterrupt() = character is NPC || (character is Player && !character.hasMenuOpen() && character.dialogue == null)
 
-    private fun CoroutineScope.launch(action: Action) {
+    private fun CoroutineScope.launch(action: Action<*>) {
         if (character.resumeSuspension() || (character is Player && character.dialogueSuspension != null)) {
             return
         }
@@ -143,36 +139,36 @@ class ActionQueue(
     }
 }
 
-fun Character.queue(name: String, initialDelay: Int = 0, behaviour: LogoutBehaviour = LogoutBehaviour.Discard, onCancel: (() -> Unit)? = { clearAnimation() }, block: suspend Action.() -> Unit) {
-    queue.add(Action(this, name, ActionPriority.Normal, initialDelay, behaviour, onCancel = onCancel, action = block))
+fun <C : Character> C.queue(name: String, initialDelay: Int = 0, behaviour: LogoutBehaviour = LogoutBehaviour.Discard, onCancel: (() -> Unit)? = { clearAnim() }, block: suspend Action<C>.() -> Unit) {
+    queue.add(Action(this, name, ActionPriority.Normal, initialDelay, behaviour, onCancel = onCancel, action = block as suspend Action<*>.() -> Unit))
 }
 
-fun Character.softQueue(
+fun <C : Character> C.softQueue(
     name: String,
     initialDelay: Int = 0,
     behaviour: LogoutBehaviour = LogoutBehaviour.Discard,
-    onCancel: (() -> Unit)? = { clearAnimation() },
-    block: suspend Action.() -> Unit
+    onCancel: (() -> Unit)? = { clearAnim() },
+    block: suspend Action<C>.() -> Unit,
 ) {
-    queue.add(Action(this, name, ActionPriority.Soft, initialDelay, behaviour, onCancel = onCancel, action = block))
+    queue.add(Action(this, name, ActionPriority.Soft, initialDelay, behaviour, onCancel = onCancel, action = block as suspend Action<*>.() -> Unit))
 }
 
-fun Character.weakQueue(
+fun <C : Character> C.weakQueue(
     name: String,
     initialDelay: Int = 0,
     behaviour: LogoutBehaviour = LogoutBehaviour.Discard,
-    onCancel: (() -> Unit)? = { clearAnimation() },
-    block: suspend Action.() -> Unit
+    onCancel: (() -> Unit)? = { clearAnim() },
+    block: suspend Action<C>.() -> Unit,
 ) {
-    queue.add(Action(this, name, ActionPriority.Weak, initialDelay, behaviour, onCancel = onCancel, action = block))
+    queue.add(Action(this, name, ActionPriority.Weak, initialDelay, behaviour, onCancel = onCancel, action = block as suspend Action<*>.() -> Unit))
 }
 
-fun Character.strongQueue(
+fun <C : Character> C.strongQueue(
     name: String,
     initialDelay: Int = 0,
     behaviour: LogoutBehaviour = LogoutBehaviour.Discard,
-    onCancel: (() -> Unit)? = { clearAnimation() },
-    block: suspend Action.() -> Unit
+    onCancel: (() -> Unit)? = { clearAnim() },
+    block: suspend Action<C>.() -> Unit,
 ) {
-    queue.add(Action(this, name, ActionPriority.Strong, initialDelay, behaviour, onCancel = onCancel, action = block))
+    queue.add(Action(this, name, ActionPriority.Strong, initialDelay, behaviour, onCancel = onCancel, action = block as suspend Action<*>.() -> Unit))
 }

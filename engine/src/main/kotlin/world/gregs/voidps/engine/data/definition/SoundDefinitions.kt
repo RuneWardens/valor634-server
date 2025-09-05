@@ -1,22 +1,49 @@
 package world.gregs.voidps.engine.data.definition
 
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import world.gregs.config.Config
 import world.gregs.voidps.engine.data.config.SoundDefinition
-import world.gregs.voidps.engine.data.yaml.decode
-import world.gregs.voidps.engine.get
-import world.gregs.voidps.engine.getProperty
 import world.gregs.voidps.engine.timedLoad
-import world.gregs.yaml.Yaml
 
+/**
+ * Officially known as Synths
+ */
 class SoundDefinitions : DefinitionsDecoder<SoundDefinition> {
 
     override lateinit var definitions: Array<SoundDefinition>
     override lateinit var ids: Map<String, Int>
 
-    fun load(yaml: Yaml = get(), path: String = getProperty("soundDefinitionsPath")): SoundDefinitions {
+    fun load(paths: List<String>): SoundDefinitions {
         timedLoad("sound definition") {
-            decode(yaml, path) { id, key, _ ->
-                SoundDefinition(id = id, stringId = key)
+            val definitions = Array(10_000) { SoundDefinition.EMPTY }
+            val ids = Object2IntOpenHashMap<String>(250, Hash.VERY_FAST_LOAD_FACTOR)
+            for (path in paths) {
+                Config.fileReader(path) {
+                    while (nextSection()) {
+                        val stringId = section()
+                        require(!ids.containsKey(stringId)) { "Duplicate sound id found '$stringId' at $path." }
+                        var id = 0
+                        var area = false
+                        while (nextPair()) {
+                            when (val key = key()) {
+                                "id" -> id = int()
+                                "area" -> area = boolean()
+                                else -> throw IllegalArgumentException("Unknown sound key: $key")
+                            }
+                        }
+                        ids[stringId] = id
+                        if (area) {
+                            definitions[id] = SoundDefinition(id = id, stringId = stringId, extras = mapOf("area" to true))
+                        } else {
+                            definitions[id] = SoundDefinition(id = id, stringId = stringId)
+                        }
+                    }
+                }
             }
+            this.definitions = definitions
+            this.ids = ids
+            ids.size
         }
         return this
     }

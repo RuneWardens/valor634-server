@@ -1,11 +1,8 @@
 package world.gregs.voidps.engine.data.definition
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import world.gregs.voidps.cache.Definition
 import world.gregs.voidps.cache.definition.Extra
-import world.gregs.voidps.engine.data.yaml.DefinitionConfig
-import world.gregs.yaml.Yaml
 
 /**
  * Looks up [Definition]'s using Definitions unique string identifier
@@ -24,9 +21,7 @@ interface DefinitionsDecoder<D> where D : Definition, D : Extra {
 
     fun empty(): D
 
-    fun get(id: Int): D {
-        return getOrNull(id) ?: empty()
-    }
+    fun get(id: Int): D = getOrNull(id) ?: empty()
 
     fun getOrNull(id: String): D? {
         if (id.isBlank()) {
@@ -39,21 +34,9 @@ interface DefinitionsDecoder<D> where D : Definition, D : Extra {
         return getOrNull(ids[id] ?: return null)
     }
 
-    fun get(id: String): D {
-        return getOrNull(id) ?: empty()
-    }
+    fun get(id: String): D = getOrNull(id) ?: empty()
 
-    fun contains(id: String): Boolean {
-        return getOrNull(id) != null
-    }
-
-    fun decode(yaml: Yaml, path: String): Int {
-        val ids = Object2IntOpenHashMap<String>()
-        val config = DefinitionConfig(ids, definitions)
-        yaml.load<Any>(path, config)
-        this.ids = ids
-        return ids.size
-    }
+    fun contains(id: String): Boolean = getOrNull(id) != null
 
     fun apply(names: Map<Int, String>, extras: Map<String, Map<String, Any>>, block: (D) -> Unit = {}) {
         for (i in definitions.indices) {
@@ -74,7 +57,6 @@ interface DefinitionsDecoder<D> where D : Definition, D : Extra {
         private val chars = "[\"',()?.!]".toRegex()
         private val underscoreChars = "[ /-]".toRegex()
 
-        fun toIdentifier(name: String) =
-            removeTags(name.lowercase().replace(underscoreChars, "_")).replace(chars, "").replace("&", "and").replace("à", "a").replace("é", "e").replace("ï", "i").replace("&#39;", "")
+        fun toIdentifier(name: String) = removeTags(name.lowercase().replace(underscoreChars, "_")).replace(chars, "").replace("&", "and").replace("à", "a").replace("é", "e").replace("ï", "i").replace("&#39;", "")
     }
 }

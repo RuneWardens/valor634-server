@@ -2,11 +2,10 @@ package world.gregs.voidps.tools.cache
 
 import com.displee.cache.CacheLibrary
 import world.gregs.voidps.cache.Index
-import world.gregs.voidps.tools.property
+import world.gregs.voidps.engine.data.Settings
 import java.io.File
 
 object HashCodeMatcher {
-
 
     private var counter = 0
     private val matches = mutableMapOf<Int, MutableSet<String>>()
@@ -90,14 +89,14 @@ object HashCodeMatcher {
             val spaced = keywords.filter { !it.contains("_") }
             for (a in underscored) {
                 for (b in underscored) {
-                    check("${a}_${b}", underscore)
-                    check("${a}${b}")
+                    check("${a}_$b", underscore)
+                    check("${a}$b")
                 }
             }
             for (a in spaced) {
                 for (b in spaced) {
                     check("$a $b", underscore)
-                    check("${a}${b}")
+                    check("${a}$b")
                 }
             }
         }
@@ -108,12 +107,12 @@ object HashCodeMatcher {
                 for (b in keywords) {
                     for (c in keywords) {
                         if (!a.contains(" ") && !b.contains(" ") && !c.contains(" ")) {
-                            check("${a}_${b}_${c}", underscore)
-                            check("${a}${b}_${c}", underscore)
-                            check("${a}_${b}${c}", underscore)
+                            check("${a}_${b}_$c", underscore)
+                            check("${a}${b}_$c", underscore)
+                            check("${a}_${b}$c", underscore)
                         }
-                        check("${a}${b}${c}", underscore)
-                        check("${a}${b}${c}", space)
+                        check("${a}${b}$c", underscore)
+                        check("${a}${b}$c", space)
                         if (!a.contains("_") && !b.contains("_") && !c.contains("_")) {
                             check("$a $b $c", space)
                             check("$a$b $c", space)
@@ -141,11 +140,11 @@ object HashCodeMatcher {
             for (a in keywords) {
                 for (b in keywords) {
                     if (!a.contains(" ") && !b.contains(" ")) {
-                        check("${a}_${b}", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
-                        check("${a}_${b}", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
+                        check("${a}_$b", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
+                        check("${a}_$b", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
                     }
-                    check("${a}${b}", prefix = "[proc,", suffix = "]", maxSequence = 1)
-                    check("${a}${b}", prefix = "[clientscript,", suffix = "]", maxSequence = 1)
+                    check("${a}$b", prefix = "[proc,", suffix = "]", maxSequence = 1)
+                    check("${a}$b", prefix = "[clientscript,", suffix = "]", maxSequence = 1)
                 }
             }
         }
@@ -156,15 +155,15 @@ object HashCodeMatcher {
                 for (b in keywords) {
                     for (c in keywords) {
                         if (!a.contains(" ") && !b.contains(" ") && !c.contains(" ")) {
-                            check("${a}_${b}_${c}", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
-                            check("${a}${b}_${c}", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
-                            check("${a}_${b}${c}", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
-                            check("${a}_${b}_${c}", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
-                            check("${a}${b}_${c}", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
-                            check("${a}_${b}${c}", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
+                            check("${a}_${b}_$c", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
+                            check("${a}${b}_$c", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
+                            check("${a}_${b}$c", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
+                            check("${a}_${b}_$c", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
+                            check("${a}${b}_$c", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
+                            check("${a}_${b}$c", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
                         }
-                        check("${a}${b}${c}", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
-                        check("${a}${b}${c}", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
+                        check("${a}${b}$c", underscore, prefix = "[proc,", suffix = "]", maxSequence = 1)
+                        check("${a}${b}$c", underscore, prefix = "[clientscript,", suffix = "]", maxSequence = 1)
                     }
                 }
             }
@@ -185,8 +184,8 @@ object HashCodeMatcher {
             println("Searching double keywords")
             for (a in keywords) {
                 for (b in keywords) {
-                    check("${a}_${b}", comma, maxSequence = 1)
-                    check("${a}${b}", comma, maxSequence = 1)
+                    check("${a}_$b", comma, maxSequence = 1)
+                    check("${a}$b", comma, maxSequence = 1)
                 }
             }
         }
@@ -196,10 +195,10 @@ object HashCodeMatcher {
             for (a in keywords) {
                 for (b in keywords) {
                     for (c in keywords) {
-                        check("${a}_${b}_${c}", comma, maxSequence = 1)
-                        check("${a}${b}_${c}", comma, maxSequence = 1)
-                        check("${a}_${b}${c}", comma, maxSequence = 1)
-                        check("${a}${b}${c}", comma, maxSequence = 1)
+                        check("${a}_${b}_$c", comma, maxSequence = 1)
+                        check("${a}${b}_$c", comma, maxSequence = 1)
+                        check("${a}_${b}$c", comma, maxSequence = 1)
+                        check("${a}${b}$c", comma, maxSequence = 1)
                     }
                 }
             }
@@ -212,7 +211,8 @@ object HashCodeMatcher {
     }
 
     private fun dumpHashes() {
-        val lib = CacheLibrary.create(property("cachePath"))
+        Settings.load()
+        val lib = CacheLibrary.create(Settings["storage.cache.path"])
         val hashes = File("./temp/hashes/hashes.txt")
         hashes.delete()
         for (index in lib.indices()) {
@@ -234,7 +234,7 @@ object HashCodeMatcher {
             return
         }
         for (a in chars) {
-            val str = "$prefix${a}"
+            val str = "$prefix$a"
             if (str.hashCode() == target) {
                 println("Found: $str")
             }

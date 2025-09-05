@@ -1,7 +1,7 @@
 package world.gregs.voidps.tools.map.view.draw
 
+import content.bot.interact.navigation.graph.NavigationGraph
 import kotlinx.coroutines.*
-import world.gregs.voidps.bot.navigation.graph.NavigationGraph
 import world.gregs.voidps.engine.map.collision.Collisions
 import world.gregs.voidps.tools.map.view.draw.WorldMap.Companion.flipRegionY
 import world.gregs.voidps.tools.map.view.graph.AreaSet
@@ -10,7 +10,6 @@ import world.gregs.voidps.tools.map.view.interact.MouseHover
 import world.gregs.voidps.tools.map.view.interact.MouseZoom
 import world.gregs.voidps.tools.map.view.interact.ResizeListener
 import world.gregs.voidps.tools.map.view.ui.OptionsPane
-import world.gregs.yaml.Yaml
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -18,10 +17,10 @@ import java.awt.Graphics
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class MapView(nav: NavigationGraph?, collisions: Collisions?, private val areaFile: String) : JPanel() {
+class MapView(nav: NavigationGraph?, collisions: Collisions?, private val areaFiles: List<String>) : JPanel() {
 
     private val options = OptionsPane(this)
-    private val areaSet = AreaSet.load(Yaml(), areaFile)
+    private val areaSet = AreaSet.load(areaFiles)
     private val highlight = HighlightedTile(this, options)
     private val area = HighlightedArea(this, areaSet)
 
@@ -75,7 +74,7 @@ class MapView(nav: NavigationGraph?, collisions: Collisions?, private val areaFi
             while (isActive) {
                 delay(10000)
 //                MutableNavigationGraph.save(nav, graphFile)
-                AreaSet.save(areaSet, areaFile)
+//                AreaSet.save(areaSet, areaFiles)
             }
         }
         repaint()
@@ -154,7 +153,7 @@ class MapView(nav: NavigationGraph?, collisions: Collisions?, private val areaFi
 
     fun drag(mouseX: Int, mouseY: Int, mapStartX: Int, mapStartY: Int, offsetX: Int, offsetY: Int) {
         val point = areaSet.getPointOrNull(mapStartX, flipMapY(mapStartY), level)
-        val node = null//nav.nodes.firstOrNull { it is Tile && it.id == Tile.getId(mapStartX, flipMapY(mapStartY), level) }
+        val node = null // nav.nodes.firstOrNull { it is Tile && it.id == Tile.getId(mapStartX, flipMapY(mapStartY), level) }
         when {
             node != null -> {
 //                lc.update(mapStartX, mapStartY, mouseX, mouseY)
@@ -240,9 +239,7 @@ class MapView(nav: NavigationGraph?, collisions: Collisions?, private val areaFi
         }
     }
 
-    override fun getPreferredSize(): Dimension {
-        return Dimension(1280, 768)
-    }
+    override fun getPreferredSize(): Dimension = Dimension(1280, 768)
 
     companion object {
         private const val DEBUG_BORDER = 0

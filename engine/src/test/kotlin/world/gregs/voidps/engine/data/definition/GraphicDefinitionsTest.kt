@@ -2,7 +2,6 @@ package world.gregs.voidps.engine.data.definition
 
 import world.gregs.voidps.cache.definition.data.GraphicDefinition
 import world.gregs.voidps.cache.definition.decoder.GraphicDecoder
-import world.gregs.yaml.Yaml
 
 internal class GraphicDefinitionsTest : DefinitionsDecoderTest<GraphicDefinition, GraphicDecoder, GraphicDefinitions>() {
 
@@ -11,20 +10,14 @@ internal class GraphicDefinitionsTest : DefinitionsDecoderTest<GraphicDefinition
     override val id: String = "teleport_modern"
     override val intId: Int = 1576
 
-    override fun expected(): GraphicDefinition {
-        return GraphicDefinition(intId, stringId = id)
-    }
+    override fun expected(): GraphicDefinition = GraphicDefinition(intId, stringId = id)
 
-    override fun empty(): GraphicDefinition {
-        return GraphicDefinition(-1)
-    }
+    override fun empty(): GraphicDefinition = GraphicDefinition(-1)
 
-    override fun definitions(): GraphicDefinitions {
-        return GraphicDefinitions(definitions)
-    }
+    override fun definitions(): GraphicDefinitions = GraphicDefinitions(definitions)
 
     override fun load(definitions: GraphicDefinitions) {
-        definitions.load(Yaml(), "../data/definitions/graphics.yml")
+        val uri = GraphicDefinitionsTest::class.java.getResource("test-gfx.toml")!!
+        definitions.load(listOf(uri.path))
     }
-
 }

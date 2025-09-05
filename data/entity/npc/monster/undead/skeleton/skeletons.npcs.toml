@@ -1,0 +1,179 @@
+[skeleton_warlock]
+id = 459
+hitpoints = 180
+mage = 10
+def = 7
+spell = "earth_strike"
+attack_range = 5
+attack_radius = 11
+style = "magic"
+max_hit_magic = 30
+slayer_xp = 13.8
+combat_anims = "skeleton"
+categories = ["skeletons", "undead"]
+examine = "It rattles when it moves."
+
+[skeleton_mace_shield]
+id = 92
+hitpoints = 170
+att = 24
+str = 24
+def = 24
+wander_radius = 8
+attack_radius = 4
+max_hit_melee = 40
+hunt_mode = "aggressive_intolerant"
+style = "slash"
+height = 30
+respawn_delay = 60
+combat_anims = "skeleton"
+categories = ["skeletons", "undead"]
+slayer_xp = 17.0
+examine = "Could do with gaining a few pounds."
+
+[skeleton_flail]
+clone = "skeleton_mace_shield"
+id = 5340
+
+[skeleton_sword_shield]
+clone = "skeleton_mace_shield"
+id = 5338
+
+[skeleton_helmet]
+clone = "skeleton_mace_shield"
+id = 5332
+
+[skeleton_unarmed]
+id = 5333
+hitpoints = 290
+att = 15
+str = 18
+def = 17
+wander_radius = 8
+attack_radius = 4
+max_hit_melee = 30
+hunt_mode = "aggressive"
+style = "crush"
+height = 30
+respawn_delay = 70
+slayer_xp = 29.0
+combat_anims = "skeleton"
+categories = ["skeletons", "undead"]
+examine = "Could do with gaining a few pounds."
+
+[skeleton_unarmed_1]
+clone = "skeleton_unarmed"
+id = 5336
+
+[skeleton_shield_helmet]
+clone = "skeleton_unarmed"
+id = 90
+
+[skeleton_shield_helmet_1]
+clone = "skeleton_unarmed"
+id = 91
+
+[skeleton_shield]
+clone = "skeleton_unarmed"
+id = 5334
+
+[skeleton_builder]
+clone = "skeleton_unarmed"
+id = 3291
+
+[skeleton_axe_shield]
+clone = "skeleton_mace_shield"
+id = 5337
+
+[skeleton_longsword]
+clone = "skeleton_mace_shield"
+id = 5339
+
+[skeleton_axe_shield_85]
+id = 5367
+hitpoints = 590
+att = 32
+str = 35
+def = 36
+wander_radius = 8
+attack_radius = 4
+max_hit_melee = 50
+hunt_mode = "aggressive"
+style = "slash"
+height = 30
+respawn_delay = 60
+combat_anims = "skeleton"
+categories = ["skeletons", "undead"]
+examine = "Could do with gaining a few pounds."
+
+[skeleton_sword_shield_85]
+clone = "skeleton_axe_shield_85"
+id = 5368
+
+[skeleton_sword_shield_45]
+clone = "skeleton_axe_shield_85"
+id = 93
+
+[stronghold_skeleton_round_shield]
+id = 4384
+hitpoints = 700
+att = 60
+str = 50
+def = 60
+max_hit_melee = 60 # Unknown
+style = "crush" # Unknown
+respawn_delay = 60
+slayer_xp = 70.0
+attack_radius = 11
+wander_radius = 9
+hunt_mode = "cowardly"
+combat_anims = "skeleton"
+categories = ["skeletons", "undead"]
+examine = "Could do with gaining a few pounds."
+
+[stronghold_skeleton_helmet]
+clone = "skeleton_axe_shield_85"
+id = 4385
+hitpoints = 700
+att = 50
+str = 50
+def = 40
+max_hit_melee = 50 # Unknown
+style = "crush" # Unknown
+respawn_delay = 70
+slayer_xp = 70.0
+attack_radius = 11
+wander_radius = 9
+hunt_mode = "cowardly"
+categories = ["skeletons", "undead"]
+examine = "Could do with gaining a few pounds."
+
+[stronghold_skeleton_helmet_1]
+clone = "stronghold_skeleton_helmet"
+id = 5335
+
+[skeleton_hammer_shield]
+clone = "stronghold_skeleton_helmet"
+id = 4386
+
+[stronghold_skeleton_unarmed]
+clone = "stronghold_skeleton_helmet"
+id = 5365
+
+[stronghold_skeleton_shield]
+clone = "stronghold_skeleton_helmet"
+id = 5366
+
+[skeleton_catacombs]
+id = 7921
+hitpoints = 180
+att = 17
+str = 17
+def = 17
+attack_radius = 11
+wander_radius = 8
+hunt_mode = "aggressive"
+drop_table = "skeleton_catacombs"
+combat_anims = "skeleton_catacombs"
+categories = ["skeletons", "undead"]
+examine = "It rattles when it moves."

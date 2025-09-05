@@ -1,5 +1,6 @@
 package world.gregs.voidps.engine.entity.character.mode
 
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.entity.character.mode.move.Movement
 import world.gregs.voidps.engine.entity.character.move.tele
 import world.gregs.voidps.engine.entity.character.npc.NPC
@@ -13,7 +14,7 @@ import world.gregs.voidps.type.random
 class Wander(
     private val npc: NPC,
     private val spawn: Tile = npc["spawn_tile"]!!,
-    private val stuckLimit: Int = npc.def["stuck_limit", 500]
+    private val stuckLimit: Int = npc.def["stuck_limit", 500],
 ) : Movement(npc) {
 
     private var stuckCounter = 0
@@ -45,7 +46,14 @@ class Wander(
     }
 
     companion object {
-        var active = false
-        fun wanders(npc: NPC) = active && npc.def.walkMask.toInt() and 0x1 != 0 && npc.def.walkMask.toInt() and 0x2 != 0 && npc.def.contains("wander_radius")
+        fun wanders(npc: NPC): Boolean {
+            if (!Settings["world.npcs.randomWalk", false]) {
+                return false
+            }
+            return when (npc.def.walkMode.toInt()) {
+                ModeType.WANDER_THROUGH, ModeType.WANDER_SPECIAL, ModeType.WANDER_WATER -> true
+                else -> false
+            }
+        }
     }
 }

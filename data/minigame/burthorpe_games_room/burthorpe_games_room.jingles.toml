@@ -1,0 +1,8 @@
+[burthorpe_games_room_draw]
+id = 108
+
+[burthorpe_games_room_loss]
+id = 109
+
+[burthorpe_games_room_victory]
+id = 110

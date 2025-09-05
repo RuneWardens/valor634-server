@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import world.gregs.voidps.cache.definition.data.InterfaceDefinition
-import world.gregs.voidps.engine.client.ui.Interfaces.Companion.ROOT_ID
-import world.gregs.voidps.engine.client.ui.Interfaces.Companion.ROOT_INDEX
 import world.gregs.voidps.engine.client.ui.event.InterfaceClosed
 import world.gregs.voidps.engine.client.ui.event.InterfaceRefreshed
 import world.gregs.voidps.network.login.protocol.encode.closeInterface
@@ -20,11 +18,7 @@ internal class InterfacesSingleTest : InterfaceTest() {
     @BeforeEach
     override fun setup() {
         super.setup()
-        every { definitions.get(name) } returns InterfaceDefinition(id = 1, stringId = "1", extras = mapOf(
-            "type" to "type",
-            "parent_fixed" to ROOT_ID,
-            "index_fixed" to ROOT_INDEX
-        ))
+        every { definitions.getOrNull(name) } returns InterfaceDefinition(id = 1, stringId = "1", type = "type")
         interfaces.resizable = false
     }
 
@@ -36,14 +30,14 @@ internal class InterfacesSingleTest : InterfaceTest() {
 
     @Test
     fun `Opened contains with type`() {
-        open.add(name)
+        open["type"] = name
         assertTrue(interfaces.contains(name))
         assertEquals(name, interfaces.get("type"))
     }
 
     @Test
     fun `Reopen only refreshes`() {
-        open.add(name)
+        open["type"] = name
 
         assertFalse(interfaces.open(name))
 
@@ -54,14 +48,14 @@ internal class InterfacesSingleTest : InterfaceTest() {
 
     @Test
     fun `Close no longer contains`() {
-        every { definitions.get("root").id } returns 2
-        open.add(name)
+        every { definitions.getOrNull(name) } returns InterfaceDefinition(id = 1, stringId = "1", type = "type", resizable = 2, fixed = 2)
+        open["type"] = name
 
         assertTrue(interfaces.close(name))
         assertFalse(interfaces.contains(name))
 
         verifyOrder {
-            client.closeInterface(2, 0)
+            client.closeInterface(2)
             events.emit(InterfaceClosed(name))
         }
     }

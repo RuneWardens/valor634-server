@@ -8,6 +8,17 @@ import net.pearx.kasechange.toSnakeCase
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.type.Area
 import world.gregs.voidps.type.Tile
+import kotlin.collections.HashSet
+import kotlin.collections.MutableMap
+import kotlin.collections.MutableSet
+import kotlin.collections.Set
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.contains
+import kotlin.collections.getOrPut
+import kotlin.collections.iterator
+import kotlin.collections.mutableSetOf
+import kotlin.collections.set
 
 /**
  * Events is a Trie used for efficient storage and retrieval of handlers based on an arbitrary list of parameters.
@@ -19,7 +30,7 @@ import world.gregs.voidps.type.Tile
  * - Default match; Always matches every input
  */
 class Events(
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
 ) {
     private val roots: MutableMap<Int, TrieNode> = Int2ObjectOpenHashMap(8)
     var all: ((Player, Event) -> Unit)? = null
@@ -57,22 +68,14 @@ class Events(
      */
     fun emit(dispatcher: EventDispatcher, event: Event): Boolean {
         val handlers = search(dispatcher, event) ?: return false
-        if (dispatcher is Player) {
-            if (dispatcher.contains("bot")) {
-                all?.invoke(dispatcher, event)
-            } else if (dispatcher["debug", false]) {
-                logger.debug { "Event: $dispatcher - ${event.debug(dispatcher)}" }
-            }
-        }
         runBlocking {
-            for (handler in handlers) {
-                if (event is CancellableEvent && event.cancelled) {
-                    break
-                }
-                handler.invoke(event, dispatcher)
-            }
+            handleEvent(handlers, event, dispatcher)
         }
         return true
+    }
+
+    fun launch(block: suspend CoroutineScope.() -> Unit) {
+        scope.launch(errorHandler, block = block)
     }
 
     /**
@@ -81,18 +84,23 @@ class Events(
      */
     fun emit(dispatcher: EventDispatcher, event: SuspendableEvent): Boolean {
         val handlers = search(dispatcher, event) ?: return false
-        if (dispatcher is Player && dispatcher.contains("bot")) {
-            all?.invoke(dispatcher, event)
-        }
-        scope.launch(errorHandler) {
-            for (handler in handlers) {
-                if (event is CancellableEvent && event.cancelled) {
-                    break
-                }
-                handler.invoke(event, dispatcher)
-            }
+        launch {
+            handleEvent(handlers, event, dispatcher)
         }
         return true
+    }
+
+    private suspend fun handleEvent(handlers: Set<suspend Event.(EventDispatcher) -> Unit>, event: Event, dispatcher: EventDispatcher) {
+        for (handler in handlers) {
+            if (event is CancellableEvent && event.cancelled) {
+                break
+            }
+            try {
+                handler.invoke(event, dispatcher)
+            } catch (e: Exception) {
+                logger.warn(e) { "Error in event handler $dispatcher $event $handler" }
+            }
+        }
     }
 
     fun contains(dispatcher: EventDispatcher, event: Event): Boolean {
@@ -162,7 +170,7 @@ class Events(
         node: TrieNode,
         depth: Int,
         skip: (suspend Event.(EventDispatcher) -> Unit)? = null,
-        output: MutableSet<suspend Event.(EventDispatcher) -> Unit> = mutableSetOf()
+        output: MutableSet<suspend Event.(EventDispatcher) -> Unit> = mutableSetOf(),
     ): Set<suspend Event.(EventDispatcher) -> Unit> {
         if (depth == event.size) {
             if (node.handler!!.contains(skip)) {
@@ -187,14 +195,12 @@ class Events(
         return output
     }
 
-    private fun matches(key: Any?, param: Any?): Boolean {
-        return when {
-            key is String && param is String -> wildcardEquals(key, param)
-            param is Set<*> -> param.contains(key)
-            key is Set<*> -> key.contains(param)
-            key is Area -> param is Tile && key.contains(param)
-            else -> key == param
-        }
+    private fun matches(key: Any?, param: Any?): Boolean = when {
+        key is String && param is String -> wildcardEquals(key, param)
+        param is Set<*> -> param.contains(key)
+        key is Set<*> -> key.contains(param)
+        key is Area -> param is Tile && key.contains(param)
+        else -> key == param
     }
 
     fun clear() {
@@ -217,47 +223,32 @@ class Events(
         }
 
         @JvmName("handleDispatcher")
-        fun <D : EventDispatcher, E : Event> handle(vararg parameters: Any?, override: Boolean = true, handler: suspend E.(D) -> Unit) {
-            handle(parameters, override, handler as suspend Event.(EventDispatcher) -> Unit)
+        fun <D : EventDispatcher, E : Event> handle(vararg parameters: Any?, handler: suspend E.(D) -> Unit) {
+            handle(parameters, handler as suspend Event.(EventDispatcher) -> Unit)
+        }
+
+        @JvmName("handleEventDispatcher")
+        fun <D : EventDispatcher, E : Event> handle(parameters: Array<out Any?>, handler: suspend E.(D) -> Unit) {
+            handle(parameters, handler as suspend Event.(EventDispatcher) -> Unit)
         }
 
         @JvmName("handleEvent")
-        fun <E : Event> handle(vararg parameters: Any?, override: Boolean = true, handler: suspend E.(EventDispatcher) -> Unit) {
-            handle(parameters, override, handler as suspend Event.(EventDispatcher) -> Unit)
+        fun <E : Event> handle(vararg parameters: Any?, handler: suspend E.(EventDispatcher) -> Unit) {
+            handle(parameters, handler as suspend Event.(EventDispatcher) -> Unit)
         }
 
-        private fun handle(parameters: Array<out Any?>, override: Boolean = true, handler: suspend Event.(EventDispatcher) -> Unit) {
-            if (!override) {
-                // Handlers override by default so find and continue onto the next handler
-                // after the current is finished by searching again but skipping itself
-                var self: (suspend Event.(EventDispatcher) -> Unit)? = null
-                self = handler@{ entity ->
-                    handler.invoke(this, entity)
-                    if (this is CancellableEvent && this.cancelled) {
-                        return@handler
-                    }
-                    val handlers = events.search(entity, this, self!!) ?: return@handler
-                    for (h in handlers) {
-                        if (entity is CancellableEvent && entity.cancelled) {
-                            break
-                        }
-                        h.invoke(this, entity)
-                    }
-                }
-                events.insert(parameters, self)
-            } else {
-                events.insert(parameters, handler)
-            }
+        private fun handle(parameters: Array<out Any?>, handler: suspend Event.(EventDispatcher) -> Unit) {
+            events.insert(parameters, handler)
         }
     }
 }
 
 @JvmName("onEventDispatcher")
-inline fun <D : EventDispatcher, reified E : Event> onEvent(vararg parameters: Any = arrayOf(E::class.simpleName!!.toSnakeCase()), override: Boolean = true, noinline handler: suspend E.(D) -> Unit) {
-    Events.handle(parameters = parameters, override, handler)
+inline fun <D : EventDispatcher, reified E : Event> onEvent(vararg parameters: Any = arrayOf(E::class.simpleName!!.toSnakeCase()), noinline handler: suspend E.(D) -> Unit) {
+    Events.handle(parameters, handler)
 }
 
 @JvmName("onEvent")
-inline fun <reified E : Event> onEvent(vararg parameters: Any = arrayOf(E::class.simpleName!!.toSnakeCase()), override: Boolean = true, noinline handler: suspend E.(EventDispatcher) -> Unit) {
-    Events.handle(parameters = parameters, override, handler)
+inline fun <reified E : Event> onEvent(vararg parameters: Any = arrayOf(E::class.simpleName!!.toSnakeCase()), noinline handler: suspend E.(EventDispatcher) -> Unit) {
+    Events.handle(parameters, handler)
 }

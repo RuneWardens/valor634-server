@@ -2,7 +2,6 @@ package world.gregs.voidps.tools.map.render
 
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
-import org.koin.fileProperties
 import world.gregs.voidps.cache.Cache
 import world.gregs.voidps.cache.MemoryCache
 import world.gregs.voidps.cache.config.decoder.MapSceneDecoder
@@ -10,13 +9,16 @@ import world.gregs.voidps.cache.config.decoder.OverlayDecoder
 import world.gregs.voidps.cache.config.decoder.UnderlayDecoder
 import world.gregs.voidps.cache.config.decoder.WorldMapInfoDecoder
 import world.gregs.voidps.cache.definition.decoder.*
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.tools.Pipeline
 import world.gregs.voidps.tools.cache.Xteas
+import world.gregs.voidps.tools.map.MapDecoder
 import world.gregs.voidps.tools.map.render.draw.MinimapIconPainter
 import world.gregs.voidps.tools.map.render.draw.RegionRenderer
 import world.gregs.voidps.tools.map.render.load.MapTileSettings
 import world.gregs.voidps.tools.map.render.load.RegionManager
 import world.gregs.voidps.type.Region
+import java.awt.image.BufferedImage
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -25,20 +27,25 @@ import java.util.concurrent.TimeUnit
  */
 object WorldMapDumper {
 
-    var minimapIcons = false
+    var minimapIcons = true
 
     @JvmStatic
     fun main(args: Array<String>) {
+        dump("./images/test/")
+    }
+
+    fun dump(path: String, block: ((BufferedImage, Int, Region) -> Unit)? = null) {
+        Settings.load("game.properties")
         val koin = startKoin {
-            fileProperties("/tool.properties")
             modules(
-            module {
-                single { MemoryCache(getProperty<String>("cachePath")) as Cache }
-                single { MapDecoder(get<Xteas>()) }
-                single(createdAtStart = true) {
-                    Xteas()//.load(getProperty("xteaPath"), getPropertyOrNull("xteaJsonKey") ?: Xteas.DEFAULT_KEY, getPropertyOrNull("xteaJsonValue") ?: Xteas.DEFAULT_VALUE)
-                }
-            })
+                module {
+                    single { MemoryCache(Settings["storage.cache.path"]) as Cache }
+                    single { MapDecoder(get<Xteas>()) }
+                    single(createdAtStart = true) {
+                        Xteas() // .load(Settings["storage.xteas"], Settings["xteaJsonKey", Xteas.DEFAULT_KEY], Settings["xteaJsonValue", Xteas.DEFAULT_VALUE])
+                    }
+                },
+            )
         }.koin
 
         val cache: Cache = koin.get()
@@ -46,15 +53,15 @@ object WorldMapDumper {
         val objectDecoder = ObjectDecoderFull(members = true, lowDetail = false).load(cache)
         val overlayDefinitions = OverlayDecoder().load(cache)
         val underlayDefinitions = UnderlayDecoder().load(cache)
-        val textureDefinitions = TextureDecoder().load(cache)
+        val textureDefinitions = MaterialDecoder().load(cache)
         val worldMapDecoder = WorldMapDetailsDecoder().load(cache)
         val worldMapInfoDecoder = WorldMapInfoDecoder().load(cache)
         val spriteDecoder = SpriteDecoder().load(cache)
         val mapSceneDecoder = MapSceneDecoder().load(cache)
 
-        File("./images/").mkdir()
+        File(path).mkdir()
         for (i in 0 until 4) {
-            File("./images/$i/").mkdir()
+            File("$path$i/").mkdir()
         }
 
         val loader = MinimapIconPainter(objectDecoder, worldMapDecoder, worldMapInfoDecoder, spriteDecoder)
@@ -63,12 +70,12 @@ object WorldMapDumper {
         val settings = MapTileSettings(4, underlayDefinitions, overlayDefinitions, textureDefinitions, manager = manager)
 
         val pipeline = Pipeline<Region>()
-        pipeline.add(RegionRenderer(manager, objectDecoder, spriteDecoder, mapSceneDecoder, loader, settings))
+        pipeline.add(RegionRenderer(manager, objectDecoder, spriteDecoder, mapSceneDecoder, loader, settings, block))
 
         val regions = mutableListOf<Region>()
         for (regionX in 0 until 256) {
             for (regionY in 0 until 256) {
-                cache.data(5, "m${regionX}_${regionY}") ?: continue
+                cache.data(5, "m${regionX}_$regionY") ?: continue
                 regions.add(Region(regionX, regionY))
             }
         }

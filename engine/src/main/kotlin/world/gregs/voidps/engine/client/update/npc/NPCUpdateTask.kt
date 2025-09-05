@@ -15,7 +15,7 @@ import world.gregs.voidps.type.RegionLevel
 
 class NPCUpdateTask(
     private val npcs: NPCs,
-    private val encoders: List<VisualEncoder<NPCVisuals>>
+    private val encoders: List<VisualEncoder<NPCVisuals>>,
 ) {
 
     fun run(player: Player) {
@@ -41,7 +41,7 @@ class NPCUpdateTask(
         viewport: Viewport,
         sync: Writer,
         updates: Writer,
-        set: IntSet
+        set: IntSet,
     ) {
         var index: Int
         var npc: NPC?
@@ -72,27 +72,18 @@ class NPCUpdateTask(
      * Calculate the type of update required for a local [npc]
      */
     private fun localChange(client: Player, viewport: Viewport, npc: NPC?): LocalChange {
-        if (npc == null || !npc.tile.within(client.tile, viewport.radius)) {
+        if (npc == null || npc.hide || !npc.tile.within(client.tile, viewport.radius)) {
             return LocalChange.Remove
         }
         val visuals = npc.visuals
-        if (!visuals.moved) {
-            return if (visuals.flag != 0) LocalChange.Update else LocalChange.None
+        return when {
+            visuals.tele -> LocalChange.Tele
+            visuals.walkStep != -1 && npc.def["crawl", false] -> LocalChange.Crawl
+            visuals.runStep != -1 -> LocalChange.Run
+            visuals.walkStep != -1 -> LocalChange.Walk
+            visuals.flag != 0 -> LocalChange.Update
+            else -> LocalChange.None
         }
-
-        if (visuals.walkStep != -1 && npc.def["crawl", false]) {
-            return LocalChange.Crawl
-        }
-
-        if (visuals.runStep != -1) {
-            return LocalChange.Run
-        }
-
-        if (visuals.walkStep != -1) {
-            return LocalChange.Walk
-        }
-
-        return LocalChange.Tele
     }
 
     private fun encodeMovement(change: LocalChange, sync: Writer, npc: NPC) {
@@ -114,7 +105,7 @@ class NPCUpdateTask(
         viewport: Viewport,
         sync: Writer,
         updates: Writer,
-        set: IntSet
+        set: IntSet,
     ) {
         var region: RegionLevel
         var npc: NPC
@@ -128,14 +119,13 @@ class NPCUpdateTask(
                 val visuals = npc.visuals
                 val flag = visuals.flag
                 val delta = npc.tile.delta(client.tile)
-                val teleporting = visuals.moved && visuals.walkStep == -1 && visuals.runStep == -1
                 set.add(npc.index)
                 sync.writeBits(15, index)
                 sync.writeBits(2, npc.tile.level)
-                sync.writeBits(1, teleporting)
+                sync.writeBits(1, visuals.tele)
                 sync.writeBits(5, delta.y + if (delta.y < 15) 32 else 0)
                 sync.writeBits(5, delta.x + if (delta.x < 15) 32 else 0)
-                sync.writeBits(3, (visuals.turn.direction shr 11) - 4)
+                sync.writeBits(3, (visuals.face.direction shr 11) - 4)
                 sync.writeBits(1, flag != 0)
                 sync.writeBits(14, npc.def.id)
                 encodeVisuals(updates, flag, visuals, client.index)
@@ -151,7 +141,9 @@ class NPCUpdateTask(
         if (updates.position() >= MAX_UPDATE_SIZE) {
             return false
         }
-
+        if (npc.hide) {
+            return false
+        }
         return set.size < LOCAL_NPC_CAP && !set.contains(index) && npc.tile.within(client.tile, viewport.radius)
     }
 

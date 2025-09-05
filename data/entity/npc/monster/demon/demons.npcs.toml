@@ -1,0 +1,133 @@
+[delrith]
+id = 879
+max_hit_melee = 90
+hitpoints = 70
+att = 11
+str = 10
+def = 5
+attack_speed = 6
+categories = ["demons"]
+combat_anims = "demon"
+combat_sounds = "demon"
+examine = "A freshly summoned demon."
+
+[delrith_weakened]
+id = 880
+examine = "The demon doesn't look so strong now."
+
+[greater_demon]
+id = 83
+att = 76
+str = 78
+def = 81
+attack_range = 5
+attack_radius = 11
+hitpoints = 870
+slayer_xp = 87.0
+max_hit_melee = 90
+style = "slash"
+drop_table = "greater_demon"
+combat_anims = "demon"
+combat_sounds = "demon"
+categories = ["demons"]
+respawn_delay = 15
+hunt_mode = "aggressive"
+height = 60
+examine = "Big, red, and incredibly evil."
+
+[greater_demon_1]
+id = 1585
+clone = "greater_demon"
+
+[greater_demon_2]
+id = 4698
+clone = "greater_demon"
+
+[greater_demon_3]
+id = 4699
+clone = "greater_demon"
+
+[greater_demon_4]
+id = 4700
+clone = "greater_demon"
+
+[greater_demon_5]
+id = 4701
+clone = "greater_demon"
+
+[lesser_demon]
+id = 82
+hitpoints = 790
+att = 68
+str = 70
+def = 71
+mage = 1
+range = 1
+style = "slash"
+max_hit_melee = 80
+wander_radius = 4
+combat_anims = "demon"
+combat_sounds = "demon"
+drop_table = "lesser_demon"
+hunt_mode = "aggressive"
+categories = ["demons"]
+respawn_delay = 30
+examine = "Lesser, but still pretty big."
+
+[lesser_demon_2]
+clone = "lesser_demon"
+id = 4694
+
+[lesser_demon_3]
+clone = "lesser_demon"
+id = 4695
+
+[lesser_demon_4]
+clone = "lesser_demon"
+id = 4696
+
+[lesser_demon_5]
+clone = "lesser_demon"
+id = 4697
+
+[lesser_demon_melzars_maze]
+clone = "lesser_demon"
+id = 6101
+
+[black_demon]
+id = 84
+att = 145
+str = 148
+def = 152
+attack_range = 5
+attack_radius = 11
+hitpoints = 1570
+slayer_xp = 157.0
+wander_radius = 4
+max_hit_melee = 160
+attack_speed = 4
+style = "slash"
+drop_table = "black_demon"
+combat_anims = "demon"
+combat_sounds = "demon"
+categories = ["demons"]
+respawn_delay = 30
+hunt_mode = "aggressive"
+height = 60
+examine = "A big, scary, jet-black demon."
+
+[black_demon_1]
+id = 4702
+clone = "black_demon"
+
+[black_demon_2]
+id = 4703
+clone = "black_demon"
+
+[black_demon_3]
+id = 4704
+clone = "black_demon"
+
+[black_demon_4]
+id = 4705
+clone = "black_demon"

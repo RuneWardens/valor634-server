@@ -1,0 +1,14 @@
+[ghost_attack]
+id = 436
+
+[ghost_attack2]
+id = 437
+
+[ghost_death]
+id = 438
+
+[ghost_defend]
+id = 439
+
+[ghost_defend2]
+id = 440

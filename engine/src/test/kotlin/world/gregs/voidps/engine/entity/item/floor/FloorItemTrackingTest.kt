@@ -28,16 +28,18 @@ class FloorItemTrackingTest {
         items = FloorItems(batches, mockk(relaxed = true))
         tracking = FloorItemTracking(items, players, batches)
         startKoin {
-            modules(module {
-                single { ItemDefinitions(arrayOf(ItemDefinition(0))).apply { ids = mapOf("item" to 0) } }
-            })
+            modules(
+                module {
+                    single { ItemDefinitions(arrayOf(ItemDefinition(0))).apply { ids = mapOf("item" to 0) } }
+                },
+            )
         }
     }
 
     @Test
     fun `Private items are revealed after timer`() {
-        val item = FloorItem(Tile.EMPTY, "item", revealTicks = 10, owner = "player")
-        items.add(item)
+        val item = items.add(Tile.EMPTY, "item", revealTicks = 10, owner = "player")
+        items.run()
 
         repeat(10) {
             assertEquals("player", item.owner)
@@ -51,8 +53,8 @@ class FloorItemTrackingTest {
 
     @Test
     fun `Public items are removed after timer`() {
-        val item = FloorItem(Tile.EMPTY, "item", disappearTicks = 10, owner = null)
-        items.add(item)
+        val item = items.add(Tile.EMPTY, "item", disappearTicks = 10)
+        items.run()
 
         repeat(10) {
             tracking.run()
@@ -62,9 +64,30 @@ class FloorItemTrackingTest {
     }
 
     @Test
+    fun `Removal timer isn't counting down while reveal timer is active`() {
+        val item = items.add(Tile.EMPTY, "item", revealTicks = 10, disappearTicks = 10, owner = "player")
+        items.run()
+
+        repeat(10) {
+            assertEquals("player", item.owner)
+            tracking.run()
+        }
+
+        repeat(5) {
+            assertNull(item.owner)
+            tracking.run()
+        }
+
+        assertEquals(0, item.revealTicks)
+        assertEquals(5, item.disappearTicks)
+        assertFalse(item.reveal())
+        assertFalse(item.remove())
+    }
+
+    @Test
     fun `Public items revealed and removed after timers`() {
-        val item = FloorItem(Tile.EMPTY, "item", revealTicks = 10, disappearTicks = 10, owner = "player")
-        items.add(item)
+        val item = items.add(Tile.EMPTY, "item", revealTicks = 10, disappearTicks = 10, owner = "player")
+        items.run()
 
         repeat(10) {
             tracking.run()

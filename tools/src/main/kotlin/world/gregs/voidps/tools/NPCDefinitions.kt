@@ -2,27 +2,33 @@ package world.gregs.voidps.tools
 
 import world.gregs.voidps.cache.Cache
 import world.gregs.voidps.cache.CacheDelegate
+import world.gregs.voidps.cache.config.decoder.RenderAnimationDecoder
 import world.gregs.voidps.cache.definition.decoder.NPCDecoder
+import world.gregs.voidps.engine.data.Settings
+import world.gregs.voidps.engine.data.configFiles
 import world.gregs.voidps.engine.data.definition.AmmoDefinitions
 import world.gregs.voidps.engine.data.definition.CategoryDefinitions
 import world.gregs.voidps.engine.data.definition.NPCDefinitions
 import world.gregs.voidps.engine.data.definition.ParameterDefinitions
-import world.gregs.yaml.Yaml
+import world.gregs.voidps.engine.data.find
 
 object NPCDefinitions {
     @JvmStatic
     fun main(args: Array<String>) {
-        val cache: Cache = CacheDelegate(property("cachePath"))
-        val yaml = Yaml()
-        val categories = CategoryDefinitions().load(yaml, property("categoryDefinitionsPath"))
-        val ammo = AmmoDefinitions().load(yaml, property("ammoDefinitionsPath"))
-        val parameters = ParameterDefinitions(categories, ammo).load(yaml, property("parameterDefinitionsPath"))
+        Settings.load()
+        val files = configFiles()
+        val cache: Cache = CacheDelegate(Settings["storage.cache.path"])
+        val categories = CategoryDefinitions().load(files.find(Settings["definitions.categories"]))
+        val ammo = AmmoDefinitions().load(files.find(Settings["definitions.ammoGroups"]))
+        val parameters = ParameterDefinitions(categories, ammo).load(files.find(Settings["definitions.parameters"]))
         val definitions = NPCDecoder(true, parameters).load(cache)
-        val decoder = NPCDefinitions(definitions).load(yaml, property("npcDefinitionsPath"))
+        val decoder = NPCDefinitions(definitions).load(files.getValue(Settings["definitions.npcs"]))
+        val renderAnimations = RenderAnimationDecoder().load(cache)
         for (i in decoder.definitions.indices) {
             val def = decoder.getOrNull(i) ?: continue
-            if (def.name.contains("diango", ignoreCase = true)) {
-                println("$i ${def.name} ${def.extras} ${def.transforms?.contentToString()} ${def.options.contentDeepToString()}")
+            if (def.name.contains("spiritual ranger", ignoreCase = true)) {
+                val emotes = renderAnimations.getOrNull(def.renderEmote)
+                println("$i ${def.name} ${emotes?.primaryIdle} ${emotes?.primaryWalk} ${emotes?.run}")
             }
         }
     }

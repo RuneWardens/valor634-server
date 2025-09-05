@@ -1,5 +1,8 @@
 package world.gregs.voidps.engine.data.definition.data
 
+import world.gregs.config.ConfigReader
+import world.gregs.voidps.engine.client.ui.chat.toIntRange
+
 /**
  * Note: all regular tree data is accurate to wiki/skilling chances spreadsheet
  * @param log The log given on success
@@ -19,19 +22,45 @@ data class Tree(
     val chance: IntRange = 0..0,
     val hatchetLowDifference: IntRange = 0..0,
     val hatchetHighDifference: IntRange = 0..0,
-    val respawnDelay: IntRange = 0..0
+    val respawnDelay: IntRange = 0..0,
 ) {
     companion object {
-        operator fun invoke(map: Map<String, Any>) = Tree(
-            log = map["log"] as? String ?: EMPTY.log,
-            level = map["level"] as? Int ?: EMPTY.level,
-            xp = map["xp"] as? Double ?: EMPTY.xp,
-            depleteRate = map["deplete_rate"] as? Double ?: EMPTY.depleteRate,
-            chance = map["chance"] as? IntRange ?: EMPTY.chance,
-            hatchetLowDifference = map["hatchet_low_dif"] as? IntRange ?: EMPTY.hatchetLowDifference,
-            hatchetHighDifference = map["hatchet_high_dif"] as? IntRange ?: EMPTY.hatchetHighDifference,
-            respawnDelay = map["respawn"] as? IntRange ?: EMPTY.respawnDelay
-        )
+        operator fun invoke(reader: ConfigReader): Tree {
+            var log = ""
+            var level = 1
+            var xp = 0.0
+            var depleteRate = 1.0
+            var chanceMin = 0
+            var chanceMax = 0
+            var hatchetLowDifference: IntRange = 0..0
+            var hatchetHighDifference: IntRange = 0..0
+            var respawnDelay: IntRange = 0..0
+            while (reader.nextEntry()) {
+                when (val key = reader.key()) {
+                    "log" -> log = reader.string()
+                    "level" -> level = reader.int()
+                    "xp" -> xp = reader.double()
+                    "deplete_rate" -> depleteRate = reader.double()
+                    "chance_min" -> chanceMin = reader.int()
+                    "chance_max" -> chanceMax = reader.int()
+                    "hatchet_low_dif" -> hatchetLowDifference = reader.string().toIntRange()
+                    "hatchet_high_dif" -> hatchetHighDifference = reader.string().toIntRange()
+                    "respawn" -> respawnDelay = reader.string().toIntRange()
+                    else -> throw IllegalArgumentException("Unexpected key: '$key' ${reader.exception()}")
+                }
+            }
+            return Tree(
+                log = log,
+                level = level,
+                xp = xp,
+                depleteRate = depleteRate,
+                chance = chanceMin until chanceMax,
+                hatchetLowDifference = hatchetLowDifference,
+                hatchetHighDifference = hatchetHighDifference,
+                respawnDelay = respawnDelay,
+            )
+        }
+
         val EMPTY = Tree()
     }
 }

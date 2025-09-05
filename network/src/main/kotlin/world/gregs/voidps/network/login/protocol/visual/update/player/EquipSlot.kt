@@ -4,7 +4,7 @@ import java.util.*
 
 enum class EquipSlot(val index: Int) {
     None(-1),
-    Hat(0),// Head
+    Hat(0), // Head
     Cape(1),
     Amulet(2),
     Weapon(3),
@@ -14,15 +14,30 @@ enum class EquipSlot(val index: Int) {
     Hands(9),
     Feet(10),
     Ring(12),
-    Ammo(13);
+    Ammo(13),
+    ;
 
     companion object {
+        private val map = mapOf(
+            "None" to None,
+            "Hat" to Hat,
+            "Cape" to Cape,
+            "Amulet" to Amulet,
+            "Weapon" to Weapon,
+            "Chest" to Chest,
+            "Shield" to Shield,
+            "Legs" to Legs,
+            "Hands" to Hands,
+            "Feet" to Feet,
+            "Ring" to Ring,
+            "Ammo" to Ammo,
+        )
+
         fun by(index: Int): EquipSlot = entries.firstOrNull { it.index == index } ?: None
 
         fun by(name: String): EquipSlot {
             val formatted = name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-            return entries.firstOrNull { it.name == formatted } ?: None
+            return map[formatted] ?: None
         }
-
     }
 }

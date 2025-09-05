@@ -68,7 +68,7 @@ object DialogueParsing {
             if (npcName.isBlank() && dialogue.type == "DIALOGUE_NPC") {
                 npcName = dialogue.name
             }
-            println("\nsuspend fun CharacterContext.${dialogue.methodName()} {")
+            println("\nsuspend fun CharacterContext<Player>.${dialogue.methodName()} {")
             val options = print(content, id, name = npcName, skip = skip)
             println("}")
             if (options != null && printed.add(options.id)) {
@@ -110,11 +110,11 @@ object DialogueParsing {
     }
 
     private fun printOptions(content: Map<Int, Dialogue>, dialogue: Dialogue, printIds: Boolean, name: String) {
-        println("\nsuspend fun CharacterContext.${dialogue.methodName()} {")
+        println("\nsuspend fun CharacterContext<Player>.${dialogue.methodName()} {")
         println("    choice(\"${dialogue.options.first()}\") {${if (printIds) " // ${dialogue.id}" else ""}")
         for (option in dialogue.options.drop(1)) {
             val match =
-                dialogue.next.firstOrNull { content[it]?.text == option && (content[it]?.name == dialogue.name || content[it]?.name == "Player") }// ?: content.values.firstOrNull { it.text == option }?.id
+                dialogue.next.firstOrNull { content[it]?.text == option && (content[it]?.name == dialogue.name || content[it]?.name == "Player") } // ?: content.values.firstOrNull { it.text == option }?.id
             if (match != null) {
                 val next = content[content[match]!!.next.first()]
                 if (next != null && isValidNextDialogue(dialogue, next, Int.MAX_VALUE, name)) {

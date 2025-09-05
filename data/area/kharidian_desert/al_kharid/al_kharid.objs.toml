@@ -1,0 +1,19 @@
+[furnace_al_kharid]
+id = 11666
+examine = "A hot furnace."
+
+[cooking_range_al_kharid]
+id = 25730
+examine = "Ideal for cooking on."
+
+[bank_booth_al_kharid]
+id = 35647
+examine = "Open for business."
+
+[al_kharid_mine_shortcut_bottom]
+id = 9332
+examine = "A rocky outcrop."
+
+[al_kharid_mine_shortcut_top]
+id = 9331
+examine = "A rocky outcrop."

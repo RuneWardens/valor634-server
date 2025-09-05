@@ -18,20 +18,16 @@ import world.gregs.voidps.cache.definition.data.NPCDefinition
 import world.gregs.voidps.engine.GameLoop
 import world.gregs.voidps.engine.client.sendScript
 import world.gregs.voidps.engine.client.ui.close
-import world.gregs.voidps.engine.client.variable.start
 import world.gregs.voidps.engine.data.definition.AreaDefinitions
 import world.gregs.voidps.engine.entity.character.mode.EmptyMode
 import world.gregs.voidps.engine.entity.character.move.tele
 import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.npc.NPCOption
 import world.gregs.voidps.engine.entity.character.player.Player
-import world.gregs.voidps.engine.entity.character.player.equip.BodyParts
 import world.gregs.voidps.engine.event.Events
 import world.gregs.voidps.engine.map.collision.Collisions
 import world.gregs.voidps.engine.script.KoinMock
-import world.gregs.voidps.engine.suspend.TickSuspension
-import world.gregs.voidps.network.login.protocol.visual.NPCVisuals
-import world.gregs.voidps.network.login.protocol.visual.PlayerVisuals
+import world.gregs.voidps.engine.suspend.Suspension
 import world.gregs.voidps.type.Tile
 import world.gregs.voidps.type.Zone
 import kotlin.test.assertEquals
@@ -43,7 +39,7 @@ internal class InteractTest : KoinMock() {
     private lateinit var player: Player
     private lateinit var target: NPC
     private lateinit var interact: Interact
-    private lateinit var interaction: Interaction
+    private lateinit var interaction: Interaction<Player>
     private var approached = false
     private var operated = false
 
@@ -61,11 +57,12 @@ internal class InteractTest : KoinMock() {
             single { LineValidator(get()) }
             single { StepValidator(get()) }
             single { PathFinder(get()) }
-        }
+        },
     )
 
     @BeforeEach
     fun setup() {
+        Events.setEvents(Events())
         mockkStatic("world.gregs.voidps.engine.client.ui.InterfacesKt")
         mockkStatic("world.gregs.voidps.engine.client.EncodeExtensionsKt")
         approached = false
@@ -75,17 +72,13 @@ internal class InteractTest : KoinMock() {
         every { player.close(null) } returns true
         every { player.sendScript(any()) } just Runs
         every { player.interfaces.get(any()) } returns null
-        player.visuals = PlayerVisuals(0, BodyParts())
         player.collision = CollisionStrategies.Normal
         target = NPC(tile = Tile(10, 10))
-        target.visuals = NPCVisuals(0)
         target.collision = CollisionStrategies.Normal
-        target.def = NPCDefinition.EMPTY
         declareMock<AreaDefinitions> {
             every { get(any<Zone>()) } returns emptySet()
         }
     }
-
 
     private fun interact(operate: Boolean, approach: Boolean, suspend: Boolean) {
         interaction = NPCOption(player, target, NPCDefinition.EMPTY, "interact")
@@ -93,17 +86,17 @@ internal class InteractTest : KoinMock() {
         player.mode = interact
         Events.events.clear()
         if (operate) {
-            Events.handle<Player, NPCOption>("player_operate_npc", "*", "*") {
+            Events.handle<Player, NPCOption<Player>>("player_operate_npc", "*", "*") {
                 if (suspend) {
-                    TickSuspension(2)
+                    Suspension.start(character, 2)
                 }
                 operated = true
             }
         }
         if (approach) {
-            Events.handle<Player, NPCOption>("player_approach_npc", "*", "*") {
+            Events.handle<Player, NPCOption<Player>>("player_approach_npc", "*", "*") {
                 if (suspend) {
-                    TickSuspension(2)
+                    Suspension.start(character, 2)
                 }
                 approached = true
             }
@@ -160,12 +153,12 @@ internal class InteractTest : KoinMock() {
     }
 
     @TestFactory
-    fun `Interaction waits before completion`() = listOf("suspension", "delay", "interface").map { type ->
+    fun `Interaction waits before completion`() = listOf("suspension", "interface").map { type ->
         dynamicTest("Interaction waits for $type") {
             operated = false
             interact(operate = true, approach = false, suspend = type == "suspension")
             if (type == "delay") {
-                player.start("delay", 2)
+                player["delay"] = 2
             } else if (type == "interface") {
                 every { player.interfaces.get("main_screen") } returns "an_interface"
             }

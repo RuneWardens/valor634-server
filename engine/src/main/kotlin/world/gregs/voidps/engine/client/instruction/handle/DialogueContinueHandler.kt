@@ -8,7 +8,7 @@ import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.network.client.instruction.InteractDialogue
 
 class DialogueContinueHandler(
-    private val definitions: InterfaceDefinitions
+    private val definitions: InterfaceDefinitions,
 ) : InstructionHandler<InteractDialogue>() {
 
     private val logger = InlineLogger()
@@ -21,7 +21,7 @@ class DialogueContinueHandler(
             return
         }
 
-        val component = definitions.getComponent(id, componentId)
+        val component = definitions.get(id).components?.get(componentId)
         if (component == null) {
             logger.debug { "Dialogue $interfaceId component $componentId not found for player $player" }
             return
@@ -31,9 +31,8 @@ class DialogueContinueHandler(
             ContinueDialogue(
                 id,
                 component.stringId,
-                button
-            )
+                button,
+            ),
         )
     }
-
 }

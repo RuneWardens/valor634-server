@@ -2,18 +2,17 @@ package world.gregs.voidps.engine.client
 
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import world.gregs.voidps.engine.data.AccountManager
-import world.gregs.voidps.engine.data.AccountStorage
-import world.gregs.voidps.engine.data.PlayerSave
-import world.gregs.voidps.engine.data.SaveQueue
+import world.gregs.voidps.engine.data.*
 import world.gregs.voidps.engine.data.config.AccountDefinition
 import world.gregs.voidps.engine.data.definition.AccountDefinitions
+import world.gregs.voidps.engine.data.exchange.Claim
+import world.gregs.voidps.engine.data.exchange.OpenOffers
+import world.gregs.voidps.engine.data.exchange.PriceHistory
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.chat.clan.Clan
 import world.gregs.voidps.engine.script.KoinMock
@@ -30,7 +29,7 @@ import kotlin.test.assertNull
 internal class PlayerAccountLoaderTest : KoinMock() {
 
     private lateinit var queue: ConnectionQueue
-    private lateinit var storage: AccountStorage
+    private lateinit var storage: Storage
     private lateinit var saveQueue: SaveQueue
     private lateinit var accounts: AccountManager
     private lateinit var definitions: AccountDefinitions
@@ -41,7 +40,7 @@ internal class PlayerAccountLoaderTest : KoinMock() {
     fun setup() {
         playerSave = null
         queue = mockk(relaxed = true)
-        storage = object : AccountStorage {
+        storage = object : Storage {
             override fun names(): Map<String, AccountDefinition> = emptyMap()
 
             override fun clans(): Map<String, Clan> = emptyMap()
@@ -49,13 +48,24 @@ internal class PlayerAccountLoaderTest : KoinMock() {
             override fun save(accounts: List<PlayerSave>) {
             }
 
-            override fun exists(accountName: String): Boolean {
-                return false
+            override fun offers(days: Int): OpenOffers = OpenOffers()
+
+            override fun saveOffers(offers: OpenOffers) {
             }
 
-            override fun load(accountName: String): PlayerSave? {
-                return playerSave
+            override fun claims(): Map<Int, Claim> = emptyMap()
+
+            override fun saveClaims(claims: Map<Int, Claim>) {
             }
+
+            override fun priceHistory(): Map<String, PriceHistory> = emptyMap()
+
+            override fun savePriceHistory(history: Map<String, PriceHistory>) {
+            }
+
+            override fun exists(accountName: String): Boolean = false
+
+            override fun load(accountName: String): PlayerSave? = playerSave
         }
         saveQueue = SaveQueue(storage, scope = TestScope())
         definitions = AccountDefinitions(mutableMapOf("name" to AccountDefinition("name", "oldName", "", "hash")))
@@ -72,7 +82,7 @@ internal class PlayerAccountLoaderTest : KoinMock() {
     @Test
     fun `Successful login`() = runTest {
         val client: Client = mockk(relaxed = true)
-        playerSave = PlayerSave("name", "hash", Tile.EMPTY, doubleArrayOf(), emptyList(), intArrayOf(), true, intArrayOf(), intArrayOf(), emptyMap(), emptyMap(), emptyMap(), emptyList())
+        playerSave = PlayerSave("name", "hash", Tile.EMPTY, doubleArrayOf(), emptyList(), intArrayOf(), true, intArrayOf(), intArrayOf(), emptyMap(), emptyMap(), emptyMap(), emptyList(), arrayOf(), emptyList())
         coEvery { queue.await() } just Runs
 
         val instructions = loader.load(client, "name", "pass", 2)
@@ -95,14 +105,14 @@ internal class PlayerAccountLoaderTest : KoinMock() {
         val client: Client = mockk(relaxed = true)
         val player = Player(index = 4, accountName = "name", passwordHash = "\$2a\$10\$cPB7bqICWrOILrWnXuYNDu1EsbZal9AjxYMbmpMOtI1kwruazGiby", variables = mutableMapOf("display_name" to "name"))
         coEvery { queue.await() } just Runs
-        every { accounts.setup(any()) } returns true
+        every { accounts.setup(any(), client, 2) } returns true
 
         loader.connect(player, client, 2)
 
         coVerify {
             queue.await()
-            client.login("name", 4, 0, membersWorld = false)
-            accounts.spawn(player, client, 2)
+            client.login("name", 4, 0, member = false, membersWorld = false)
+            accounts.spawn(player, client)
         }
     }
 
@@ -111,7 +121,7 @@ internal class PlayerAccountLoaderTest : KoinMock() {
         mockkStatic("world.gregs.voidps.network.login.protocol.encode.LoginEncoderKt")
         val client: Client = mockk(relaxed = true)
         val player = Player(index = 4, accountName = "name", passwordHash = "\$2a\$10\$cPB7bqICWrOILrWnXuYNDu1EsbZal9AjxYMbmpMOtI1kwruazGiby", variables = mutableMapOf("display_name" to "name"))
-        every { accounts.setup(player) } returns false
+        every { accounts.setup(player, client, 2) } returns false
 
         loader.connect(player, client, 2)
 
@@ -119,5 +129,4 @@ internal class PlayerAccountLoaderTest : KoinMock() {
             client.disconnect(Response.WORLD_FULL)
         }
     }
-
 }

@@ -1,13 +1,14 @@
 package world.gregs.voidps.engine.entity.character.player
 
 import world.gregs.voidps.engine.data.definition.AccountDefinitions
+import world.gregs.voidps.engine.data.definition.NPCDefinitions
 import world.gregs.voidps.engine.data.definition.RenderEmoteDefinitions
 import world.gregs.voidps.engine.get
 import world.gregs.voidps.network.login.protocol.visual.VisualMask
 import world.gregs.voidps.network.login.protocol.visual.update.player.Appearance
 import world.gregs.voidps.network.login.protocol.visual.update.player.MoveType
 
-fun Player.flagTemporaryMoveType() = visuals.flag(VisualMask.TEMPORARY_MOVE_TYPE_MASK)
+fun Player.flagMovementType() = visuals.flag(VisualMask.MOVEMENT_TYPE_MASK)
 
 fun Player.flagAppearance() {
     visuals.flag(VisualMask.APPEARANCE_MASK)
@@ -15,7 +16,7 @@ fun Player.flagAppearance() {
     appearance.length = appearance.length()
 }
 
-fun Player.flagMovementType() = visuals.flag(VisualMask.MOVEMENT_TYPE_MASK)
+fun Player.flagTemporaryMoveType() = visuals.flag(VisualMask.TEMPORARY_MOVEMENT_TYPE_MASK)
 
 val Player.appearance: Appearance
     get() = visuals.appearance
@@ -58,11 +59,20 @@ var Player.headIcon: Int
         headIcon = value
     }
 
-var Player.emote: String
-    get() = get<RenderEmoteDefinitions>().get(appearance.emote).stringId
-    set(value) = flag {
-        appearance.emote = get<RenderEmoteDefinitions>().get(value).id
+fun Player.renderEmote(id: String) = flag {
+    val definition = get<RenderEmoteDefinitions>().get(id)
+    appearance.emote = definition.id
+}
+
+fun Player.clearRenderEmote() = flag {
+    val id: String? = this@clearRenderEmote["transform_id"]
+    if (id == null) {
+        emote = 1426
+    } else {
+        val definition = get<NPCDefinitions>().get(id)
+        emote = definition.renderEmote
     }
+}
 
 var Player.name: String
     get() = this["display_name", accountName]
@@ -98,20 +108,20 @@ var Player.summoningCombatLevel: Int
         summoningCombatLevel = value
     }
 
-var Player.movementType: MoveType
-    get() = visuals.movementType.type
-    set(value) {
-        if (visuals.movementType.type != value) {
-            visuals.movementType.type = value
-            flagMovementType()
-        }
-    }
-
 var Player.temporaryMoveType: MoveType
     get() = visuals.temporaryMoveType.type
     set(value) {
         if (visuals.temporaryMoveType.type != value) {
             visuals.temporaryMoveType.type = value
             flagTemporaryMoveType()
+        }
+    }
+
+var Player.movementType: MoveType
+    get() = visuals.movementType.type
+    set(value) {
+        if (visuals.movementType.type != value) {
+            visuals.movementType.type = value
+            flagMovementType()
         }
     }

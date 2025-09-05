@@ -1,7 +1,6 @@
 package world.gregs.voidps.engine.entity.character.player.skill
 
 import io.mockk.mockk
-import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifyOrder
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -105,9 +104,9 @@ internal class LevelsTest {
 
     @Test
     fun `Can't drain lower than zero`() {
-        levels.set(Skill.Attack, 1)
+        levels.set(Skill.Attack, 2)
         assertEquals(-1, levels.drain(Skill.Attack, 2))
-        assertEquals(0, levels.get(Skill.Attack))
+        assertEquals(1, levels.get(Skill.Attack))
     }
 
     @Test
@@ -190,8 +189,8 @@ internal class LevelsTest {
         exp.set(Skill.Attack, 1154.0)
         levels.set(Skill.Attack, 10)
         val amount = levels.drain(Skill.Attack, 11)
-        assertEquals(-10, amount)
-        assertEquals(0, levels.get(Skill.Attack))
+        assertEquals(-9, amount)
+        assertEquals(1, levels.get(Skill.Attack))
     }
 
     @Test
@@ -298,8 +297,7 @@ internal class LevelsTest {
     fun `Listen to level up`() {
         exp.set(Skill.Magic, 1154.0)
         verifyOrder {
-            events.emit(any<MaxLevelChanged>())//(Skill.Magic, 1, 10))
+            events.emit(any<MaxLevelChanged>()) // (Skill.Magic, 1, 10))
         }
     }
-
 }

@@ -5,7 +5,6 @@ import org.rsmod.game.pathfinder.collision.CollisionFlagMap
 import org.rsmod.game.pathfinder.collision.CollisionStrategies
 import org.rsmod.game.pathfinder.collision.CollisionStrategy
 import world.gregs.voidps.engine.entity.character.Character
-import world.gregs.voidps.engine.entity.character.size
 import world.gregs.voidps.engine.get
 import world.gregs.voidps.type.Area
 import world.gregs.voidps.type.Tile
@@ -13,9 +12,7 @@ import world.gregs.voidps.type.Zone
 
 typealias Collisions = CollisionFlagMap
 
-fun Collisions.check(x: Int, y: Int, level: Int, flag: Int): Boolean {
-    return get(x, y, level) and flag != 0
-}
+fun Collisions.check(x: Int, y: Int, level: Int, flag: Int): Boolean = get(x, y, level) and flag != 0
 
 fun Collisions.check(tile: Tile, flag: Int) = check(tile.x, tile.y, tile.level, flag)
 
@@ -34,13 +31,13 @@ fun Collisions.clear(zone: Zone) {
     deallocateIfPresent(zone.tile.x, zone.tile.y, zone.level)
 }
 
-fun Area.random(character: Character): Tile? = random(character.collision, character.size)
+fun Area.random(character: Character): Tile? = random(character.collision, character.size, character.blockMove)
 
-fun Area.random(collision: CollisionStrategy = CollisionStrategies.Normal, size: Int = 1): Tile? {
+fun Area.random(collision: CollisionStrategy = CollisionStrategies.Normal, size: Int = 1, extraFlag: Int = 0): Tile? {
     val steps = get<StepValidator>()
     var tile = random()
     var exit = 100
-    while (!canFit(steps, tile, collision, size)) {
+    while (!canFit(steps, tile, collision, size, extraFlag)) {
         if (--exit <= 0) {
             return null
         }
@@ -49,85 +46,23 @@ fun Area.random(collision: CollisionStrategy = CollisionStrategies.Normal, size:
     return tile
 }
 
-private fun canFit(steps: StepValidator, tile: Tile, collision: CollisionStrategy, size: Int): Boolean {
-    val free = steps.canTravel(
-        x = tile.x,
-        z = tile.y - 1,
-        level = tile.level,
-        offsetX = 0,
-        offsetZ = 1,
-        size = size,
-        collision = collision
-    ) || steps.canTravel(
-        x = tile.x,
-        z = tile.y + 1,
-        level = tile.level,
-        offsetX = 0,
-        offsetZ = -1,
-        size = size,
-        collision = collision
-    ) || steps.canTravel(
-        x = tile.x - 1,
-        z = tile.y,
-        level = tile.level,
-        offsetX = 1,
-        offsetZ = 0,
-        size = size,
-        collision = collision
-    ) || steps.canTravel(
-        x = tile.x + 1,
-        z = tile.y,
-        level = tile.level,
-        offsetX = -1,
-        offsetZ = 0,
-        size = size,
-        collision = collision
-    )
-    if (size == 1) {
-        return free
-    } else {
-        if (!free) {
-            return false
-        }
-        for (x in 0 until size) {
-            for (y in 0 until size) {
-                if (x != size - 1 && !steps.canTravel(
-                        tile.level,
-                        tile.x + x,
-                        tile.y + y,
-                        offsetX = 1,
-                        offsetZ = 0,
-                        collision = collision
-                    )
-                ) {
-                    return false
-                }
-                if (y != size - 1 && !steps.canTravel(
-                        tile.level,
-                        tile.x + x,
-                        tile.y + y,
-                        offsetX = 0,
-                        offsetZ = 1,
-                        collision = collision
-                    )
-                ) {
-                    return false
-                }
-                if (y != size - 1 && x != size - 1 && !steps.canTravel(
-                        tile.level,
-                        tile.x + x,
-                        tile.y + y,
-                        offsetX = 1,
-                        offsetZ = 1,
-                        collision = collision
-                    )
-                ) {
-                    return false
-                }
+private fun canFit(steps: StepValidator, tile: Tile, collision: CollisionStrategy, size: Int, extraFlag: Int): Boolean {
+    if (size != 1) {
+        for (i in 1 until size) {
+            if (!steps.canTravel(tile.level, tile.x - i, tile.y, 1, 0, size, extraFlag)) {
+                return false
             }
-
+            if (!steps.canTravel(tile.level, tile.x, tile.y - i, 0, 1, size, extraFlag)) {
+                return false
+            }
+            if (!steps.canTravel(tile.level, tile.x + i, tile.y, -1, 0, size, extraFlag)) {
+                return false
+            }
+            if (!steps.canTravel(tile.level, tile.x, tile.y + i, 0, -1, size, extraFlag)) {
+                return false
+            }
         }
         return true
     }
+    return steps.canTravel(x = tile.x, z = tile.y - 1, level = tile.level, offsetX = 0, offsetZ = 1, size = size, collision = collision, extraFlag = extraFlag) || steps.canTravel(x = tile.x, z = tile.y + 1, level = tile.level, offsetX = 0, offsetZ = -1, size = size, collision = collision, extraFlag = extraFlag) || steps.canTravel(x = tile.x - 1, z = tile.y, level = tile.level, offsetX = 1, offsetZ = 0, size = size, collision = collision, extraFlag = extraFlag) || steps.canTravel(x = tile.x + 1, z = tile.y, level = tile.level, offsetX = -1, offsetZ = 0, size = size, collision = collision, extraFlag = extraFlag)
 }
-

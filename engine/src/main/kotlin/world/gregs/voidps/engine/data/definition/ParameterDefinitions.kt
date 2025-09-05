@@ -1,37 +1,50 @@
 package world.gregs.voidps.engine.data.definition
 
 import com.github.michaelbull.logging.InlineLogger
+import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import world.gregs.config.Config
 import world.gregs.voidps.cache.definition.Parameters
+import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.data.config.ParameterDefinition
-import world.gregs.voidps.engine.data.yaml.decode
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
-import world.gregs.voidps.engine.get
-import world.gregs.voidps.engine.getProperty
 import world.gregs.voidps.engine.timedLoad
-import world.gregs.yaml.Yaml
 
 /**
  * Parameters mainly for [ItemDefinitions], [NPCDefinitions], [ObjectDefinitions] and [StructDefinitions]
  */
 class ParameterDefinitions(
     private val categoryDefinitions: CategoryDefinitions,
-    private val ammoDefinitions: AmmoDefinitions
-) : DefinitionsDecoder<ParameterDefinition>, Parameters {
+    private val ammoDefinitions: AmmoDefinitions,
+) : DefinitionsDecoder<ParameterDefinition>,
+    Parameters {
 
     override lateinit var definitions: Array<ParameterDefinition>
     override lateinit var ids: Map<String, Int>
     override lateinit var parameters: Map<Int, String>
     private val logger = InlineLogger()
 
-    fun load(yaml: Yaml = get(), path: String = getProperty("parameterDefinitionsPath")): ParameterDefinitions {
+    fun load(path: String = Settings["definitions.parameters"]): ParameterDefinitions {
         timedLoad("parameter definition") {
-            val size = decode(yaml, path) { id, key, _ ->
-                ParameterDefinition(id = id, stringId = key)
+            val ids = Object2IntOpenHashMap<String>(500, Hash.VERY_FAST_LOAD_FACTOR)
+            val parameters = Int2ObjectOpenHashMap<String>(500, Hash.VERY_FAST_LOAD_FACTOR)
+            val definitions = Array(2500) { ParameterDefinition.EMPTY }
+            Config.fileReader(path) {
+                while (nextPair()) {
+                    val stringId = key()
+                    val id = int()
+                    require(!ids.containsKey(stringId)) { "Duplicate parameter id found '$stringId' at $path." }
+                    ids[stringId] = id
+                    definitions[id].stringId = stringId
+                    parameters[id] = stringId
+                }
             }
-            parameters = definitions.associate { it.id to it.stringId }
-            size
+            this.ids = ids
+            this.definitions = definitions
+            this.parameters = parameters
+            ids.size
         }
         return this
     }
@@ -66,8 +79,10 @@ class ParameterDefinitions(
                 extras[name] = Skill.all[value as Int]
             }
             name == "category" -> {
+                val set = ObjectOpenHashSet<String>()
                 val int = value as Int
-                extras[name] = categoryDefinitions.get(int).stringId
+                set.add(categoryDefinitions.get(int).stringId)
+                extras["categories"] = set
             }
             name == "ammo_group" -> {
                 val int = value as Int
@@ -82,5 +97,4 @@ class ParameterDefinitions(
     }
 
     override fun empty() = ParameterDefinition.EMPTY
-
 }
